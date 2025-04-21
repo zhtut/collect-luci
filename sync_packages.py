@@ -57,14 +57,14 @@ def sync_package(name: str, git_url: str, branch: str = None, path: str = None):
         os.rename(clone_path, name)
     else:
         print(f"需要拷贝{dest_path}下的所有到当前")
-        subprocess.getoutput(f'cp -r "{dest_path}" .')
+        subprocess.getoutput(f'cp -rf "{dest_path}"/* .')
         print('删除临时目录')
         shutil.rmtree(clone_path)
 
     print(f"同步插件{name}完成")
 
 
-print('开始拉取新代码')
+# print('开始拉取新代码')
 # subprocess.getoutput('git reset --hard && git pull')
 
 package_config = {
