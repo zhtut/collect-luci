@@ -1,3 +1,4 @@
+import json
 import os.path
 import shutil
 import subprocess
@@ -76,6 +77,12 @@ package_config = {
         'git_url': 'https://github.com/animegasan/luci-app-wolplus.git'
     }
 }
+
+other = subprocess.getoutput('echo $other_packages')
+if other:
+    print(f"输入了其他配置：{other}")
+    other_dict = json.loads(other)
+    package_config.update(other_dict)
 
 for key in package_config:
     value = package_config[key]
