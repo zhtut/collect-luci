@@ -123,5 +123,5 @@ for key in package_config:
     sync_package(key, git_url, branch=branch, path=path)
 
 print('开始提交')
-# msg = subprocess.getoutput('git add . && git commit -m "auto sync packages" && git push')
-# print(msg)
+msg = subprocess.getoutput('git add . && git commit -m "auto sync packages" && git push')
+print(msg)
