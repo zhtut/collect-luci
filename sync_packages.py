@@ -32,6 +32,7 @@ def sync_package(name: str, git_url: str, branch: str = None, path: str = None):
     code, msg = subprocess.getstatusoutput(f'git clone {git_url} {branch_params} {clone_path}')
     if code == 0:
         print("clone成功")
+        print(f"文件夹下有{subprocess.getoutput(f'ls {clone_path}')}")
     else:
         print(f'clone失败：{msg}')
         return
@@ -57,8 +58,8 @@ def sync_package(name: str, git_url: str, branch: str = None, path: str = None):
         luci_root = 'luci'
         if not os.path.exists(luci_root):
             os.mkdir(luci_root)
-        print(f'需要移动{clone_path}到{luci_root}')
-        subprocess.getoutput(f'mv {clone_path} {luci_root}/{name}')
+        print(f'需要移动{dest_path}到{luci_root}')
+        subprocess.getoutput(f'mv {dest_path} {luci_root}/{name}')
     else:
         print(f"需要拷贝{dest_path}下的所有到当前")
         subprocess.getoutput(f'cp -rf "{dest_path}"/* .')
