@@ -54,8 +54,11 @@ def sync_package(name: str, git_url: str, branch: str = None, path: str = None):
             break
 
     if is_root:
-        print(f'需要重命名{clone_path}为{name}')
-        os.rename(clone_path, name)
+        luci_root = 'luci'
+        if not os.path.exists(luci_root):
+            os.mkdir(luci_root)
+        print(f'需要移动{clone_path}到{luci_root}')
+        subprocess.getoutput(f'mv {clone_path} {luci_root}/{name}')
     else:
         print(f"需要拷贝{dest_path}下的所有到当前")
         subprocess.getoutput(f'cp -rf "{dest_path}"/* .')
@@ -71,10 +74,21 @@ def sync_package(name: str, git_url: str, branch: str = None, path: str = None):
 package_config = {
     'luci-app-store': {
         'git_url': 'https://github.com/linkease/istore.git',
-        'path': 'luci'
     },
     'luci-app-wolplus': {
         'git_url': 'https://github.com/animegasan/luci-app-wolplus.git'
+    },
+    "luci-app-easymesh": {
+        'git_url': 'https://github.com/ntlf9t/luci-app-easymesh.git'
+    },
+    "luci-app-qmodem": {
+        'git_url': 'https://github.com/FUjr/QModem.git'
+    },
+    "luci-app-gecoosac": { # 集客ac控制器
+        'git_url': 'https://github.com/lwb1978/openwrt-gecoosac.git'
+    },
+    "luci-app-passwall2": {
+        'git_url': 'https://github.com/xiaorouji/openwrt-passwall2.git'
     }
 }
 
