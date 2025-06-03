@@ -1,17 +1,12 @@
 #
-#-- TorGuard
+#-- Copyright (C) 2021 dz <dingzhong110@gmail.com>
 #
-#--Add +wpad-mesh-openssl or wpa package for build
 
 include $(TOPDIR)/rules.mk
 
-PKG_NAME:=luci-app-easymesh
-PKG_VERSION:=3.8.17
-PKG_RELEASE:=$(AUTORELEASE)
-PKG_MAINTAINER:=TorGuard <admin@torguard.net>
-
 LUCI_TITLE:=LuCI Support for easymesh
-LUCI_DEPENDS:= +kmod-cfg80211 +batctl-default +kmod-batman-adv +dawn +luci-compat +luci-lua-runtime +bash +libiwinfo-lua +luci-proto-batman-adv
+LUCI_DEPENDS:= +kmod-cfg80211 +batctl-default +kmod-batman-adv +wpad-mesh-openssl +dawn
+PKG_VERSION:=2.0
 
 include $(TOPDIR)/feeds/luci/luci.mk
 

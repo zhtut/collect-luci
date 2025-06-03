@@ -1,217 +1,127 @@
-local m, s, o
+-- Copyright (C) 2021 dz <dingzhong110@gmail.com>
+
+local m,s,o
 local sys = require "luci.sys"
 local uci = require "luci.model.uci".cursor()
-local iwinfo = require "iwinfo"
 
-m = Map("easymesh",
-    translate("Easy Mesh WiFi Setup"),
-    translate("Powered by Batman-adv (Better Approach To Mobile Adhoc Networking - Advanced). First setup your Mesh Gateway Server then setup the nodes. When configuring a Mesh Node, first activate your mesh WiFi on the radio device and establish a connection. Then enable it as a DHCP node. The default settings are typically adequate for most Mesh WiFi configurations.")
-    .. "<br/>" .. translate("Official website:") .. ' <a href="https://www.open-mesh.org/projects/batman-adv/wiki" target="_blank">https://www.open-mesh.org/projects/batman-adv/wiki</a>'
-)
+m = Map("easymesh")
 
--- ? Ensure get_verbose_hw_info() is declared first
-local function get_verbose_hw_info(iface)
-    local type = iwinfo.type(iface)
-    if not type then return "Generic" end
-
-    local driver = iwinfo[type]
-    if not driver then return "Driver not supported" end
-
-    local hw_name = driver.hardware_name and driver.hardware_name(iface) or "Unknown hardware"
-    local hw_modes = driver.hwmodelist and driver.hwmodelist(iface) or {}
-
-    local supported_modes = {}
-    for mode, supported in pairs(hw_modes) do
-        if supported then
-            table.insert(supported_modes, mode)
-        end
-    end
-
-    return hw_name .. " (" .. (#supported_modes > 0 and table.concat(supported_modes, "/") or "No mode information") .. ")"
-end
-
--- ? Fixed Neighbor Detection Function
 function detect_Node()
-    local data = {}
-
-    -- Run batctl to list neighbor nodes
-    local lps = luci.util.execi("batctl n 2>/dev/null | tail -n +3")  -- Skip headers
-
-    for line in lps do
-        -- Print each raw line for debugging
-        print("DEBUG: Raw line -> [" .. line .. "]")
-
-        -- Skip invalid lines (headers)
-        if string.match(line, "Neighbor%s+last%-seen%s+speed%s+IF") then
-            print("DEBUG: Skipping header line -> [" .. line .. "]")
-        else
-            -- Normalize spacing
-            line = string.gsub(line, "%s+", " ")
-
-            -- Extract fields
-            local neighbor, lastseen, interface = line:match("(%S+)%s+(%S+)%s+%(.+%)%s+%[(%S+)%]")
-
-            -- Debugging: Show extracted values
-            if neighbor and lastseen and interface then
-                print(string.format("DEBUG: Parsed -> Interface: %s, Neighbor: %s, Last Seen: %s", interface, neighbor, lastseen))
-                
-                table.insert(data, {
-                    ["IF"] = interface,
-                    ["Neighbor"] = neighbor,
-                    ["lastseen"] = lastseen
-                })
-            else
-                print("DEBUG: Skipped line due to incorrect format -> [" .. line .. "]")
-            end
-        end
-    end
-    return data
+	local data = {}
+	local lps = luci.util.execi(" batctl n 2>/dev/null | tail +2 | sed 's/^[ ][ ]*//g' | sed 's/[ ][ ]*/ /g' | sed 's/$/ /g' ")
+	for value in lps do
+		local row = {}
+		local pos = string.find(value, " ")
+		local IFA = string.sub(value, 1, pos - 1)
+		local value = string.sub(value, pos + 1, string.len(value))
+		pos = string.find(value, " ")
+		local pos = string.find(value, " ")
+		local Neighbora = string.sub(value, 1, pos - 1)
+		local value = string.sub(value, pos + 1, string.len(value))
+		pos = string.find(value, " ")
+		local pos = string.find(value, " ")
+		local lastseena = string.sub(value, 1, pos - 1)
+		local value = string.sub(value, pos + 1, string.len(value))
+		pos = string.find(value, " ")
+		row["IF"] = IFA
+		row["Neighbor"] = Neighbora
+		row["lastseen"] = lastseena
+		table.insert(data, row)
+	end
+	return data
 end
-
--- ? Get Active Node Count Correctly
-local Nodes = luci.sys.exec("batctl n 2>/dev/null | grep -E '^[0-9a-fA-F]{2}:' | wc -l")
-
--- ? Display Mesh Status Table
+local Nodes = luci.sys.exec("batctl n 2>/dev/null| tail +3 | wc -l")
 local Node = detect_Node()
-v = m:section(Table, Node, translate("Mesh Status"), "<b>" .. translate("Number of Active Nodes: ") .. Nodes .. "</b>")
-v:option(DummyValue, "IF", translate("Interface"))
-v:option(DummyValue, "Neighbor", translate("Neighbor Nodes"))
-v:option(DummyValue, "lastseen", translate("Last Seen Timestamp"))
+v = m:section(Table, Node, "" ,"<b>" .. translate("Active node") .. "：" .. Nodes .. "</b>")
+v:option(DummyValue, "IF", translate("IF"))
+v:option(DummyValue, "Neighbor", translate("Neighbor"))
+v:option(DummyValue, "lastseen", translate("lastseen"))
 
-s = m:section(TypedSection, "easymesh", translate("Mesh Settings"))
+-- Basic
+s = m:section(TypedSection, "easymesh", translate("Settings"), translate("General Settings"))
 s.anonymous = true
 
-s:tab("setup", translate("Basic Setup"))
-s:tab("apmode", translate("AP Mode"))
-s:tab("advanced", translate("Advanced Settings"))
-
--- Enable EasyMesh
-o = s:taboption("setup", Flag, "enabled", translate("Enable Mesh Networking"),
-    translate("Toggle this switch to activate or deactivate the Mesh Network on this device according to the settings specified in this configuration."))
+---- Eanble
+o = s:option(Flag, "enabled", translate("Enable"), translate("Enable or disable EASY MESH"))
 o.default = 0
+o.rmempty = false
 
--- Mesh Mode Selection
-o = s:taboption("setup", ListValue, "role", translate("Mesh Mode"),
-    translate("Choose whether this device is a <b>Server</b>, <b>Client</b>, or <b>Node</b> in the mesh network."))
-o:value("server", translate("Server"))
-o:value("off", translate("Node"))
-o:value("client", translate("Client"))
-o.default = "server"
+o = s:option(ListValue, "role", translate("role"))
+o:value("off", translate("off"))
+o:value("server", translate("host MESH"))
+o:value("client", translate("son MESH"))
+o.rmempty = false
 
--- Regular WiFi Network SSID
-o = s:taboption("setup", Value, "wifi_id", translate("WiFi Network SSID"),
-    translate("SSID for the regular WiFi network."))
-o.default = "easymesh_AC"
-
--- Select the WiFi radio for the regular AP
-wifiRadio = s:taboption("setup", ListValue, "wifi_radio", translate("Regular AP Radio"),
-    translate("Select the radio to be used for the regular WiFi access point."))
-
+apRadio = s:option(ListValue, "apRadio", translate("MESH Radio device"), translate("The radio device which MESH use"))
 uci:foreach("wireless", "wifi-device",
-    function(s)
-        local iface = s['.name']
-        local hw_modes = get_verbose_hw_info(iface)
-        local desc = string.format("%s (%s)", iface, hw_modes)
-        wifiRadio:value(iface, desc)
-    end)
-wifiRadio.default = "radio1"
-wifiRadio.widget = "select"
+							function(s)
+								apRadio:value(s['.name'])
+							end)
+apRadio:value("all", translate("ALL"))
+o.default = "radio0"
+o.rmempty = false
 
--- Select the WiFi radio for mesh backhaul
-apRadio = s:taboption("setup", MultiValue, "apRadio", translate("Mesh Radio(s)"),
-    translate("Select a radio interface for mesh backhaul traffic."))
+---- mesh
+o = s:option(Value, "mesh_id", translate("MESH ID"))
+o.default = "easymesh"
+o.description = translate("MESH ID")
 
-uci:foreach("wireless", "wifi-device",
-    function(s)
-        local iface = s['.name']
-        local hw_modes = get_verbose_hw_info(iface)
-        local desc = string.format("%s (%s)", iface, hw_modes)
-        apRadio:value(iface, desc)
-    end)
-apRadio.default = "radio0"
-apRadio.widget = "select"
+enable = s:option(Flag, "encryption", translate("Encryption"), translate(""))
+enable.default = 0
+enable.rmempty = false
 
-o = s:taboption("setup", Value, "mesh_id", translate("Mesh Network SSID"), translate('<p style="text-align: justify; padding: 0;"><strong>Ensure that the SSID is the same across all the servers/nodes in your mesh network.</strong></p>'))
-o.default = "easymesh_AC"
-
-encryption = s:taboption("setup", Flag, "encryption", translate("Password Protection"), translate('<p style="text-align: justify; padding: 0;"><strong>Enable this switch to require a password to join your Mesh Network.</strong></p>'))
-encryption.default = 0
-
-o = s:taboption("setup", Value, "key", translate("Mesh Password"))
+o = s:option(Value, "key", translate("Key"))
 o.default = "easymesh"
 o:depends("encryption", 1)
-o.password = true
-o.datatype = "minlength(8)"
 
-btnReapply = s:taboption("setup", Button, "_btn_reapply", translate("Reapply EasyMesh Settings"), translate('<p style="text-align: justify; padding: 0;"><strong>Use this button to apply/reapply EasyMesh configuration after you Save & Apply.</p></strong>'))
-function btnReapply.write()
-    io.popen("/easymesh/easymesh.sh &")
-end
+---- kvr
+enable = s:option(Flag, "kvr", translate("K/V/R"), translate(""))
+enable.default = 1
+enable.rmempty = false
 
-enable_kvr = s:taboption("advanced", Flag, "kvr", translate("K/V/R"), translate('<p style="text-align: justify; padding: 0;"><strong>Leave these settings as default unless you know what you\'re doing</p></strong>'))
-enable_kvr.default = 1
+o = s:option(Value, "mobility_domain", translate("Mobility Domain"), translate("4-character hexadecimal ID"))
+o.default = "4f57"
+o.datatype = "and(hexstring,rangelength(4,4))"
+o:depends("kvr", 1)
 
-mobility_domain = s:taboption("advanced", Value, "mobility_domain", translate("Mobility Domain"))
-mobility_domain.default = "4f57"
-mobility_domain.datatype = "and(hexstring,rangelength(4,4))"
+o = s:option(Value, "rssi_val", translate("Threshold for an good RSSI"))
+o.default = "-60"
+o.atatype = "range(-1,-120)"
+o:depends("kvr", 1)
 
-rssi_val = s:taboption("advanced", Value, "rssi_val", translate("Good RSSI Threshold"))
-rssi_val.default = "-60"
-rssi_val.datatype = "range(-120,-1)"
+o = s:option(Value, "low_rssi_val", translate("Threshold for an bad RSSI"))
+o.default = "-88"
+o.atatype = "range(-1,-120)"
+o:depends("kvr", 1)
 
-low_rssi_val = s:taboption("advanced", Value, "low_rssi_val", translate("Bad RSSI Threshold"))
-low_rssi_val.default = "-88"
-low_rssi_val.datatype = "range(-120,-1)"
+---- 802.11F
+--enable = s:option(Flag, "iapp", translate("inter-access point protocol"), translate("Wireless Access Points (APs) running on different vendors can communicate with each other"))
+--enable.default = 0
+--enable.rmempty = false
 
 ---- ap_mode
-o = s:taboption("apmode", Value, "hostname", translate("Node Hostname"))
-o.default = "node2"
-o:value("node2", "node2")
-o:value("node3", "node3")
-o:value("node4", "node4")
-o:value("node5", "node5")
-o:value("node6", "node6")
-o:value("node7", "node7")
-o:value("node8", "node8")
-o:value("node9", "node9")
-o.datatype = "string"
-o:depends({role="off",role="client"})
+enable = s:option(Flag, "ap_mode", translate("AP MODE Enable"), translate("Enable or disable AP MODE"))
+enable.default = 0
+enable.rmempty = false
 
--- IP Mode (DHCP or Static)
-ipmode = s:taboption("apmode", ListValue, "ipmode", translate("IP Mode"), translate("Choose if the node uses DHCP or a Static IP"))
-ipmode:value("dhcp", translate("DHCP"))
-ipmode:value("static", translate("Static"))
-ipmode.default = "dhcp"
-ipmode:depends({role="off",role="client"})
-
--- Static IP address
-o = s:taboption("apmode", Value, "ipaddr", translate("Static IP Address"))
-o.default = "192.168.8.3"
+o = s:option(Value, "ipaddr", translate("IPv4-Address"))
+o.default = "192.168.1.10"
 o.datatype = "ip4addr"
-o:depends({ipmode="static",role="off",role="client"})
+o:depends("ap_mode", 1)
 
--- DNS (Mesh Gateway IP Address)
-o = s:taboption("apmode", Value, "gateway", translate("Mesh Gateway IP Address"))
-o.default = "192.168.8.1"
-o.datatype = "ip4addr"
-o:depends({ipmode="static",role="off",role="client"})
-
--- IPv4 netmask
-o = s:taboption("apmode", Value, "netmask", translate("IPv4 netmask"))
+o = s:option(Value, "netmask", translate("IPv4 netmask"))
 o.default = "255.255.255.0"
 o.datatype = "ip4addr"
-o:depends({ipmode="static",role="off",role="client"})
+o:depends("ap_mode", 1)
 
--- IPv4 netmask
-o = s:taboption("apmode", Value, "dns", translate("DNS Server"))
-o.default = "192.168.8.1"
+o = s:option(Value, "gateway", translate("IPv4 gateway"))
+o.default = "192.168.1.1"
 o.datatype = "ip4addr"
-o:depends({ipmode="static",role="off",role="client"})
+o:depends("ap_mode", 1)
 
-btnAPMode = s:taboption("apmode", Button, "_btn_apmode", translate("Enable Dumb AP Mode"), translate("WARNING: THIS WILL CHANGE THIS NODE'S IP ADDRESS, YOU WILL LOOSE ACCESS TO THIS UI"))
-function btnAPMode.write()
-    io.popen("/easymesh/easymesh.sh dumbap &")
-end
-btnAPMode:depends({role="off",role="client"})
+o = s:option(Value, "dns", translate("Use custom DNS servers"))
+o.default = "192.168.1.1"
+o.datatype = "ip4addr"
+o:depends("ap_mode", 1)
 
 return m

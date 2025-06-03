@@ -92,6 +92,19 @@ package_config = {
     }
 }
 
+print("先全部清除")
+files = os.listdir('.')
+for f in files:
+    if f == 'sync_packages.py' or f == '.git':
+        print(f"不删除：{f}")
+        continue
+    if os.path.isdir(f):
+        print(f"删除文件夹：{f}")
+        shutil.rmtree(f)
+    else:
+        print(f"删除文件：{f}")
+        os.remove(f)
+
 other = subprocess.getoutput('echo $other_packages')
 if other:
     print(f"输入了其他配置：{other}")
@@ -106,5 +119,5 @@ for key in package_config:
     sync_package(key, git_url, branch=branch, path=path)
 
 print('开始提交')
-msg = subprocess.getoutput('git add . && git commit -m "auto sync packages" && git push')
-print(msg)
+# msg = subprocess.getoutput('git add . && git commit -m "auto sync packages" && git push')
+# print(msg)
