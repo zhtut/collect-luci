@@ -84,6 +84,9 @@ package_config = {
     "luci-app-qmodem": {
         'git_url': 'https://github.com/FUjr/QModem.git'
     },
+    "luci-app-turboacc": {
+        'git_url': 'https://github.com/chenmozhijin/turboacc.git'
+    },
     "luci-app-gecoosac": { # 集客ac控制器
         'git_url': 'https://github.com/lwb1978/openwrt-gecoosac.git'
     },
