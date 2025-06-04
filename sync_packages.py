@@ -93,7 +93,10 @@ package_config = {
     },
     "luci-app-passwall2": {
         'git_url': 'https://github.com/xiaorouji/openwrt-passwall2.git'
-    }
+    },
+    "luci-app-lucky": {
+     'git_url': 'https://github.com/gdy666/luci-app-lucky.git'
+    },
 }
 
 print("先全部清除")
