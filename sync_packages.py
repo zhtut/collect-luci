@@ -94,6 +94,9 @@ package_config = {
     "luci-app-easytier": {
      'git_url': 'https://github.com/EasyTier/luci-app-easytier.git'
     },
+    "luci-app-quickstart": {
+        'git_url':  "https://github.com/animegasan/luci-app-quickstart"
+    },
 }
 
 print("先全部清除")
