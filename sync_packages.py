@@ -79,9 +79,6 @@ package_config = {
     'luci-app-wolplus': {
         'git_url': 'https://github.com/animegasan/luci-app-wolplus.git'
     },
-    "luci-app-easymesh": {
-        'git_url': 'https://github.com/ntlf9t/luci-app-easymesh.git'
-    },
     "luci-app-qmodem": {
         'git_url': 'https://github.com/FUjr/QModem.git'
     },
@@ -91,11 +88,11 @@ package_config = {
     "luci-app-gecoosac": { # 集客ac控制器
         'git_url': 'https://github.com/lwb1978/openwrt-gecoosac.git'
     },
-    "luci-app-passwall2": {
-        'git_url': 'https://github.com/xiaorouji/openwrt-passwall2.git'
-    },
     "luci-app-lucky": {
      'git_url': 'https://github.com/gdy666/luci-app-lucky.git'
+    },
+    "luci-app-easytier": {
+     'git_url': 'https://github.com/EasyTier/luci-app-easytier.git'
     },
 }
 
