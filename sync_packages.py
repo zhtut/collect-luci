@@ -15,10 +15,6 @@ def sync_package(name: str, git_url: str, branch: str = None, path: str = None):
 
     print(f"开始同步插件：{name}, git_url: {git_url}")
 
-    if os.path.exists(name):
-        print(f"旧的{name}已存在，先删除")
-        shutil.rmtree(name)
-
     branch_params = ""
     if branch:
         branch_params = f'-b {branch}'
@@ -72,37 +68,14 @@ def sync_package(name: str, git_url: str, branch: str = None, path: str = None):
 # print('开始拉取新代码')
 # subprocess.getoutput('git reset --hard && git pull')
 
-package_config = {
-    'luci-app-store': {
-        'git_url': 'https://github.com/linkease/istore.git',
-    },
-    'luci-app-wolplus': {
-        'git_url': 'https://github.com/animegasan/luci-app-wolplus.git'
-    },
-    "luci-app-qmodem": {
-        'git_url': 'https://github.com/FUjr/QModem.git'
-    },
-    "luci-app-turboacc": {
-        'git_url': 'https://github.com/chenmozhijin/turboacc.git'
-    },
-    "luci-app-gecoosac": { # 集客ac控制器
-        'git_url': 'https://github.com/lwb1978/openwrt-gecoosac.git'
-    },
-    "luci-app-lucky": {
-     'git_url': 'https://github.com/gdy666/luci-app-lucky.git'
-    },
-    "luci-app-easytier": {
-     'git_url': 'https://github.com/EasyTier/luci-app-easytier.git'
-    },
-    "luci-app-quickstart": {
-        'git_url':  "https://github.com/animegasan/luci-app-quickstart"
-    },
-}
+config_json = 'package_config.json'
+with open(config_json, 'r') as f:
+    package_config = json.load(f)
 
 print("先全部清除")
 files = os.listdir('.')
 for f in files:
-    if f == 'sync_packages.py' or f == '.git':
+    if f == 'sync_packages.py' or f == '.git' or f == config_json:
         print(f"不删除：{f}")
         continue
     if os.path.isdir(f):
