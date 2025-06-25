@@ -44,7 +44,8 @@ def sync_package(git_url: str, branch: str = None, paths: list[str] = None):
         print(f"重命名：{clone_path}至：{short_name}")
         subprocess.getoutput(f'mv {clone_path} {short_name}')
     else:
-        if not short_name:
+        if not os.path.exists(short_name):
+            print(f"创建仓库目录：{short_name}")
             os.mkdir(short_name)
         for p in paths:
             p_path = f"{clone_path}/{p}"
