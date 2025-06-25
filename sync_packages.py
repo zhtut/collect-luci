@@ -21,6 +21,8 @@ def sync_package(git_url: str, branch: str = None, paths: list[str] = None):
     short_name = git_url[git_url.rfind('/') + 1:]
     short_name = short_name.replace('.git', '')
     clone_path = "temp-clone"
+    if os.path.exists(clone_path):
+        shutil.rmtree(clone_path)
 
     print("开始clone")
     code, msg = subprocess.getstatusoutput(f'git clone {git_url} {branch_params} {clone_path} --depth=1')
@@ -48,6 +50,9 @@ def sync_package(git_url: str, branch: str = None, paths: list[str] = None):
             dest_path = f"{short_name}/{p}"
             print(f"重命名：{p_path}至：{dest_path}")
             subprocess.getoutput(f'mv {p_path} {dest_path}')
+
+    print("删除临时clone")
+    shutil.rmtree(clone_path)
 
     print(f"同步插件{git_url}完成")
 
