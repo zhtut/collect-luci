@@ -4,10 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ffea7e66-be94-4bc8-9860-e9d2d6e8cbe5" name="更改" comment="feat: 删除qmodel和truboacc，这个要用lede来编译">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/sync_packages.py" beforeDir="false" afterPath="$PROJECT_DIR$/sync_packages.py" afterDir="false" />
-    </list>
+    <list default="true" id="ffea7e66-be94-4bc8-9860-e9d2d6e8cbe5" name="更改" comment="feat: 更新同步插件，按名称分类" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -118,12 +115,21 @@
       <option name="project" value="LOCAL" />
       <updated>1749706701382</updated>
     </task>
-    <option name="localTasksCounter" value="4" />
+    <task id="LOCAL-00004" summary="feat: 更新同步插件，按名称分类">
+      <option name="closed" value="true" />
+      <created>1750855566255</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1750855566255</updated>
+    </task>
+    <option name="localTasksCounter" value="5" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="feat: 增加easytier，删除easymesh和passwall2，编译不成功" />
     <MESSAGE value="feat: 更新配置" />
-    <option name="LAST_COMMIT_MESSAGE" value="feat: 更新配置" />
+    <MESSAGE value="feat: 更新同步插件，按名称分类" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat: 更新同步插件，按名称分类" />
   </component>
 </project>
