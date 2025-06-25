@@ -3,8 +3,6 @@ import os.path
 import shutil
 import subprocess
 
-from sympy.codegen.fnodes import dsign
-
 
 def sync_package(git_url: str, branch: str = None, paths: list[str] = None):
     """
@@ -20,7 +18,7 @@ def sync_package(git_url: str, branch: str = None, paths: list[str] = None):
     if branch:
         branch_params = f'-b {branch}'
 
-    short_name = git_url[git_url.rfind('/')+1:]
+    short_name = git_url[git_url.rfind('/') + 1:]
     short_name = short_name.replace('.git', '')
     clone_path = "temp-clone"
 
