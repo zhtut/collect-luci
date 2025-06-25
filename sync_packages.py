@@ -3,26 +3,26 @@ import os.path
 import shutil
 import subprocess
 
+from sympy.codegen.fnodes import dsign
 
-def sync_package(name: str, git_url: str, branch: str = None, path: str = None):
+
+def sync_package(git_url: str, branch: str = None, paths: list[str] = None):
     """
     从git_url进行同步仓库
-    :param name: 插件名称
     :param git_url: git的url
     :param branch: git的分支，不传为默认
     :param path: 目录下的path
     """
 
-    print(f"开始同步插件：{name}, git_url: {git_url}")
+    print(f"开始同步仓库：{git_url}, paths: {paths}")
 
     branch_params = ""
     if branch:
         branch_params = f'-b {branch}'
 
-    clone_path = name
-    if os.path.exists(clone_path):
-        print('临时目录存在，先删除')
-        shutil.rmtree(clone_path)
+    short_name = git_url[git_url.rfind('/')+1:]
+    short_name = short_name.replace('.git', '')
+    clone_path = "temp-clone"
 
     print("开始clone")
     code, msg = subprocess.getstatusoutput(f'git clone {git_url} {branch_params} {clone_path} --depth=1')
@@ -38,7 +38,20 @@ def sync_package(name: str, git_url: str, branch: str = None, path: str = None):
     if os.path.exists(git_path):
         shutil.rmtree(git_path)
 
-    print(f"同步插件{name}完成")
+    print("开始拷贝文件")
+    if not paths:
+        print(f"重命名：{clone_path}至：{short_name}")
+        subprocess.getoutput(f'mv {clone_path} {short_name}')
+    else:
+        if not short_name:
+            os.mkdir(short_name)
+        for p in paths:
+            p_path = f"{clone_path}/{p}"
+            dest_path = f"{short_name}/{p}"
+            print(f"重命名：{p_path}至：{dest_path}")
+            subprocess.getoutput(f'mv {p_path} {dest_path}')
+
+    print(f"同步插件{git_url}完成")
 
 
 # print('开始拉取新代码')
@@ -61,18 +74,12 @@ for f in files:
         print(f"删除文件：{f}")
         os.remove(f)
 
-other = subprocess.getoutput('echo $other_packages')
-if other:
-    print(f"输入了其他配置：{other}")
-    other_dict = json.loads(other)
-    package_config.update(other_dict)
-
 for key in package_config:
     value = package_config[key]
-    git_url = value['git_url']
+    git_url = key
     branch = value.get('branch')
-    path = value.get('path')
-    sync_package(key, git_url, branch=branch, path=path)
+    paths = value.get('paths')
+    sync_package(git_url, branch=branch, paths=paths)
 
 print('开始提交')
 msg = subprocess.getoutput('git add . && git commit -m "auto sync packages" && git push')

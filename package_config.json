@@ -1,22 +1,28 @@
 {
-    "luci-app-store": {
-        "git_url": "https://github.com/linkease/istore.git",
-        "type": "opkg"
+    "https://github.com/linkease/istore.git": {
+        "packages": ["luci-app-store"]
     },
-    "luci-app-wolplus": {
-        "git_url": "https://github.com/VIKINGYFY/packages.git",
-        "path": "luci-app-wolplus"
+    "https://github.com/VIKINGYFY/packages.git": {
+        "packages": ["luci-app-wolplus"],
+        "paths": ["luci-app-wolplus"]
     },
-    "luci-app-gecoosac": {
-        "git_url": "https://github.com/lwb1978/openwrt-gecoosac.git"
+    "https://github.com/lwb1978/openwrt-gecoosac.git": {
+        "packages": ["luci-app-gecoosac"]
     },
-    "luci-app-lucky": {
-        "git_url": "https://github.com/gdy666/luci-app-lucky.git"
+    "https://github.com/gdy666/luci-app-lucky.git": {
+        "packages": ["luci-app-lucky"]
     },
-    "luci-app-easytier": {
-        "git_url": "https://github.com/EasyTier/luci-app-easytier.git"
+    "https://github.com/EasyTier/luci-app-easytier.git": {
+        "packages": ["luci-app-easytier"]
     },
-    "luci-app-openlist": {
-        "git_url": "https://github.com/sbwml/luci-app-openlist.git"
+    "https://github.com/sbwml/luci-app-openlist.git": {
+        "packages": ["luci-app-openlist"]
+    },
+    "https://github.com/FUjr/QModem.git": {
+        "packages": ["luci-app-qmodem"]
+    },
+    "https://github.com/kenzok8/small-package.git": {
+        "packages": ["luci-app-oaf", "luci-app-partexp", "luci-app-quickstart", "luci-app-adguardhome"],
+        "paths": ["luci-app-oaf", "luci-app-partexp", "luci-app-quickstart","adguardhome","luci-app-adguardhome"]
     }
 }
