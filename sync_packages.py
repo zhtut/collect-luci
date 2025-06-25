@@ -25,7 +25,7 @@ def sync_package(name: str, git_url: str, branch: str = None, path: str = None):
         shutil.rmtree(clone_path)
 
     print("开始clone")
-    code, msg = subprocess.getstatusoutput(f'git clone {git_url} {branch_params} {clone_path}')
+    code, msg = subprocess.getstatusoutput(f'git clone {git_url} {branch_params} {clone_path} --depth=1')
     if code == 0:
         print("clone成功")
         print(f"文件夹下有{subprocess.getoutput(f'ls {clone_path}')}")
@@ -43,24 +43,11 @@ def sync_package(name: str, git_url: str, branch: str = None, path: str = None):
     else:
         dest_path = clone_path
 
-    is_root = False
-    for f in os.listdir(dest_path):
-        if f == 'Makefile':
-            is_root = True
-            print('当前目录是插件的根目录')
-            break
-
-    if is_root:
-        luci_root = 'luci'
-        if not os.path.exists(luci_root):
-            os.mkdir(luci_root)
-        print(f'需要移动{dest_path}到{luci_root}')
-        subprocess.getoutput(f'mv {dest_path} {luci_root}/{name}')
-    else:
-        print(f"需要拷贝{dest_path}下的所有到当前")
-        subprocess.getoutput(f'cp -rf "{dest_path}"/* .')
-        print('删除临时目录')
-        shutil.rmtree(clone_path)
+    root_dir = name
+    if not os.path.exists(root_dir):
+        os.mkdir(root_dir)
+    print(f'需要移动{dest_path}到{root_dir}')
+    subprocess.getoutput(f'mv {dest_path} {root_dir}')
 
     print(f"同步插件{name}完成")
 
