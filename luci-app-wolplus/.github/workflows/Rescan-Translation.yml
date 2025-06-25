@@ -1,0 +1,85 @@
+name: Rescan Translation
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '**/htdocs/**'
+      - '**/luasrc/**'
+      - '**/root/**'
+
+env:
+  GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+
+permissions: write-all
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Delete old Releases and Workflows
+        uses: ophub/delete-releases-workflows@main
+        with:
+          gh_token: ${{secrets.GITHUB_TOKEN}}
+          delete_workflows: true
+          workflows_keep_day: 0
+
+  scan:
+    runs-on: ubuntu-22.04
+    needs: cleanup
+    steps:
+      - name: Checkout Projects
+        uses: actions/checkout@main
+
+      - name: Initialization Environment
+        env:
+          DEBIAN_FRONTEND: noninteractive
+        run: |
+          sudo -E apt -yqq update
+          sudo -E apt -yqq install gettext
+
+          curl -LO "https://github.com/openwrt/luci/raw/master/build/i18n-scan.pl"
+          curl -LO "https://github.com/openwrt/luci/raw/master/build/i18n-update.pl"
+
+      - name: Update Translations
+        run: |
+          CHANGED_PKGS=""
+
+          for dir in $(find . -maxdepth 1 -mindepth 1 -type d -not -path '*/\.*'); do
+            PKG_PATH="$dir"
+
+            for folder in "$PKG_PATH/root/sbin" "$PKG_PATH/root/etc/hotplug.d" "$PKG_PATH/root/etc/init.d" "$PKG_PATH/root/etc/uci-defaults"; do
+              if [ -d "$folder" ]; then
+                chmod 755 -R "$folder"
+              fi
+            done
+
+            if [ -d "$PKG_PATH/po" ]; then
+              mkdir -p "$PKG_PATH/po/templates"
+              PKG_NAME=$(basename $PKG_PATH | sed 's/^luci-\(app-\|theme-\)//g')
+
+              perl "i18n-scan.pl" "$PKG_PATH" > "$PKG_PATH/po/templates/$PKG_NAME.pot"
+              perl "i18n-update.pl" "$PKG_PATH/po"
+
+              find "$PKG_PATH/po/" -name '*.po~' -exec rm -f {} \;
+
+              if [ -n "$(git status -s "$PKG_PATH")" ]; then
+                git add "$PKG_PATH"
+                CHANGED_PKGS="$CHANGED_PKGS $PKG_NAME"
+              fi
+            fi
+          done
+
+          rm -f "i18n-scan.pl" "i18n-update.pl"
+
+          if [ -n "$CHANGED_PKGS" ]; then
+            echo "CHANGED_PKGS=$CHANGED_PKGS" >> "$GITHUB_ENV"
+          fi
+
+      - name: Commit Changes
+        if: ${{ env.CHANGED_PKGS }}
+        run: |
+          git config --local user.name "github-actions[bot]"
+          git config --local user.email "<github-actions[bot]@users.noreply.github.com>"
+          git commit -m "chore(po): Rescan translation in packages: ${{ env.CHANGED_PKGS }}"
+          git push -f origin HEAD:main

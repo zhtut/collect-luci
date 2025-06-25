@@ -19,7 +19,7 @@ def sync_package(name: str, git_url: str, branch: str = None, path: str = None):
     if branch:
         branch_params = f'-b {branch}'
 
-    clone_path = 'temp-clone'
+    clone_path = name
     if os.path.exists(clone_path):
         print('临时目录存在，先删除')
         shutil.rmtree(clone_path)
@@ -37,17 +37,6 @@ def sync_package(name: str, git_url: str, branch: str = None, path: str = None):
     git_path = f'{clone_path}/.git'
     if os.path.exists(git_path):
         shutil.rmtree(git_path)
-
-    if path:
-        dest_path = f"{clone_path}/{path}"
-    else:
-        dest_path = clone_path
-
-    root_dir = name
-    if not os.path.exists(root_dir):
-        os.mkdir(root_dir)
-    print(f'需要移动{dest_path}到{root_dir}')
-    subprocess.getoutput(f'mv {dest_path} {root_dir}')
 
     print(f"同步插件{name}完成")
 
