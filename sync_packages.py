@@ -20,6 +20,8 @@ def sync_package(git_url: str, branch: str = None, paths: list[str] = None):
 
     short_name = git_url[git_url.rfind('/') + 1:]
     short_name = short_name.replace('.git', '')
+    print(f"仓库简称：{short_name}")
+
     clone_path = "temp-clone"
     if os.path.exists(clone_path):
         shutil.rmtree(clone_path)
@@ -28,7 +30,6 @@ def sync_package(git_url: str, branch: str = None, paths: list[str] = None):
     code, msg = subprocess.getstatusoutput(f'git clone {git_url} {branch_params} {clone_path} --depth=1')
     if code == 0:
         print("clone成功")
-        print(f"文件夹下有{subprocess.getoutput(f'ls {clone_path}')}")
     else:
         print(f'clone失败：{msg}')
         return
@@ -51,6 +52,7 @@ def sync_package(git_url: str, branch: str = None, paths: list[str] = None):
             print(f"重命名：{p_path}至：{dest_path}")
             subprocess.getoutput(f'mv {p_path} {dest_path}')
 
+    print(f"同步完成，完成后的目录下有：{os.listdir(short_name)}")
     if os.path.exists(clone_path):
         print("删除临时clone")
         shutil.rmtree(clone_path)
@@ -65,10 +67,16 @@ config_json = 'package_config.json'
 with open(config_json, 'r') as f:
     package_config = json.load(f)
 
+white_list = [
+    "sync_packages.py",
+    ".git",
+    "package_config.json",
+    ".gitignore"
+]
 print("先全部清除")
 files = os.listdir('.')
 for f in files:
-    if f == 'sync_packages.py' or f == '.git' or f == config_json:
+    if f in white_list:
         print(f"不删除：{f}")
         continue
     if os.path.isdir(f):
