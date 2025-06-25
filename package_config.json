@@ -1,6 +1,7 @@
 {
     "https://github.com/linkease/istore.git": {
-        "packages": ["luci-app-store"]
+        "packages": ["luci-app-store"],
+        "pkg_tool": "opkg"
     },
     "https://github.com/VIKINGYFY/packages.git": {
         "packages": ["luci-app-wolplus"],
