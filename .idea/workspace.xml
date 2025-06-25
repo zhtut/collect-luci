@@ -4,7 +4,8 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="f8bbce49-4ed8-4233-809b-06cd3d655064" name="更改" comment="删除不需要的信息">
+    <list default="true" id="f8bbce49-4ed8-4233-809b-06cd3d655064" name="更改" comment="更新完一个后，删除临时文件">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/sync_packages.py" beforeDir="false" afterPath="$PROJECT_DIR$/sync_packages.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -27,16 +28,16 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "ModuleVcsDetector.initialDetectionPerformed": "true",
-    "Python.sync_packages.executor": "Run",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "git-widget-placeholder": "main",
-    "last_opened_file_path": "C:/Users/zhtg/Projects/collect-luci"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;Python.sync_packages.executor&quot;: &quot;Run&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/Users/zhtg/Projects/collect-luci&quot;
   }
-}]]></component>
+}</component>
   <component name="RunManager">
     <configuration name="sync_packages" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="collect-luci" />
@@ -97,12 +98,21 @@
       <option name="project" value="LOCAL" />
       <updated>1750866477733</updated>
     </task>
-    <option name="localTasksCounter" value="3" />
+    <task id="LOCAL-00003" summary="更新完一个后，删除临时文件">
+      <option name="closed" value="true" />
+      <created>1750866729663</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1750866729663</updated>
+    </task>
+    <option name="localTasksCounter" value="4" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="更新配置格式，方便一个仓库加载多个插件" />
     <MESSAGE value="删除不需要的信息" />
-    <option name="LAST_COMMIT_MESSAGE" value="删除不需要的信息" />
+    <MESSAGE value="更新完一个后，删除临时文件" />
+    <option name="LAST_COMMIT_MESSAGE" value="更新完一个后，删除临时文件" />
   </component>
 </project>
