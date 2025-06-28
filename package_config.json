@@ -1,7 +1,7 @@
 {
     "https://github.com/linkease/istore.git": {
         "packages": ["luci-app-store"],
-        "pkg_tool": "opkg"
+        "apk_black_list": ["luci-app-store"]
     },
     "https://github.com/VIKINGYFY/packages.git": {
         "packages": ["luci-app-wolplus"],
