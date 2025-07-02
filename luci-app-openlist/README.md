@@ -41,7 +41,7 @@
 
 --------------
 
-## How to install prebuilt packages
+## How to install prebuilt packages (LuCI2)
 
 - Login OpenWrt terminal (SSH)
 
