@@ -43,5 +43,19 @@
             "luci-app-UUGameAcc"
         ],
         "apk_black_list": ["luci-app-quickstart"]
+    },
+    "https://github.com/xiaorouji/openwrt-passwall2.git": {
+        "packages": [
+            "luci-app-passwall2"
+        ],
+        "paths": [
+            "luci-app-passwall2"
+        ]
+    },
+    "https://github.com/xiaorouji/openwrt-passwall-packages.git": {
+        "packages": [],
+        "paths": [
+            "shadowsocks-libev", "shadowsocks-rust", "shadowsocksr-libev", "simple-obfs"
+        ]
     }
 }
