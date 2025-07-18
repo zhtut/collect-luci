@@ -1,4 +1,4 @@
-# luci-app-openlist
+# luci-app-openlist2
 
 🗂️ A file list program that supports multiple storage, powered by Gin and Solidjs.
 
@@ -34,9 +34,9 @@
 
   *2. get luci-app-openlist code & building*
   ```shell
-  git clone https://github.com/sbwml/luci-app-openlist package/openlist
-  make menuconfig # choose LUCI -> Applications -> luci-app-openlist
-  make package/openlist/luci-app-openlist/compile V=s # build luci-app-openlist
+  git clone https://github.com/sbwml/luci-app-openlist2 package/openlist
+  make menuconfig # choose LUCI -> Applications -> luci-app-openlist2
+  make package/openlist/luci-app-openlist2/compile V=s # build luci-app-openlist2
   ```
 
 --------------
@@ -58,7 +58,7 @@
 
 - Execute install script (Multi-architecture support)
   ```shell
-  sh -c "$(curl -ksS https://raw.githubusercontent.com/sbwml/luci-app-openlist/main/install.sh)"
+  sh -c "$(curl -ksS https://raw.githubusercontent.com/sbwml/luci-app-openlist2/main/install.sh)"
   ```
 
   install via ghproxy:
