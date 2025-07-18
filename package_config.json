@@ -27,8 +27,21 @@
         "packages": []
     },
     "https://github.com/kenzok8/small-package.git": {
-        "packages": ["luci-app-oaf", "luci-app-partexp", "luci-app-quickstart", "luci-app-adguardhome", "luci-app-UUGameAcc"],
-        "paths": ["luci-app-oaf", "luci-app-partexp", "quickstart","luci-app-quickstart","luci-app-adguardhome","luci-app-UUGameAcc"],
+        "packages": [
+            "luci-app-oaf",
+            "luci-app-partexp",
+            "luci-app-quickstart",
+            "luci-app-adguardhome",
+            "luci-app-UUGameAcc"
+        ],
+        "paths": [
+            "luci-app-oaf",
+            "luci-app-partexp",
+            "quickstart",
+            "luci-app-quickstart",
+            "luci-app-adguardhome",
+            "luci-app-UUGameAcc"
+        ],
         "apk_black_list": ["luci-app-quickstart"]
     }
 }
