@@ -57,7 +57,7 @@
     "https://github.com/xiaorouji/openwrt-passwall-packages.git": {
         "packages": [],
         "paths": [
-            "shadowsocks-libev", "shadowsocks-rust", "shadowsocksr-libev", "simple-obfs"
+            "shadowsocks-libev", "shadowsocks-rust", "shadowsocksr-libev", "simple-obfs", "dns2socks", "shadow-tls"
         ]
     }
 }
