@@ -32,7 +32,8 @@
             "luci-app-partexp",
             "luci-app-quickstart",
             "luci-app-adguardhome",
-            "luci-app-UUGameAcc"
+            "luci-app-UUGameAcc",
+            "luci-app-ssr-plus"
         ],
         "paths": [
             "luci-app-oaf",
@@ -40,7 +41,8 @@
             "quickstart",
             "luci-app-quickstart",
             "luci-app-adguardhome",
-            "luci-app-UUGameAcc"
+            "luci-app-UUGameAcc",
+            "luci-app-ssr-plus"
         ],
         "apk_black_list": ["luci-app-quickstart"]
     },
