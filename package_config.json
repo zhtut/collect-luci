@@ -16,8 +16,8 @@
   "https://github.com/EasyTier/luci-app-easytier.git": {
     "packages": ["luci-app-easytier"]
   },
-  "https://github.com/OpenListTeam/OpenList-OpenWRT.git": {
-    "packages": ["luci-app-openlist"]
+  "https://github.com/sbwml/luci-app-openlist2.git": {
+    "packages": ["luci-app-openlist2"]
   },
   "https://github.com/FUjr/QModem.git": {
     "packages": ["luci-app-qmodem"],
