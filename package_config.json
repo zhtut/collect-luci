@@ -1,55 +1,55 @@
 {
-    "https://github.com/linkease/istore.git": {
-        "packages": ["luci-app-store"],
-        "apk_black_list": ["luci-app-store"]
-    },
-    "https://github.com/VIKINGYFY/packages.git": {
-        "packages": ["luci-app-wolplus"],
-        "paths": ["luci-app-wolplus"]
-    },
-    "https://github.com/lwb1978/openwrt-gecoosac.git": {
-        "packages": ["luci-app-gecoosac"]
-    },
-    "https://github.com/gdy666/luci-app-lucky.git": {
-        "packages": ["luci-app-lucky"]
-    },
-    "https://github.com/EasyTier/luci-app-easytier.git": {
-        "packages": ["luci-app-easytier"]
-    },
-    "https://github.com/OpenListTeam/OpenList-OpenWRT.git": {
-      "packages": ["luci-app-openlist"]
-    },
-    "https://github.com/FUjr/QModem.git": {
-        "packages": ["luci-app-qmodem"],
-        "other_configs": "CONFIG_PACKAGE_luci-app-qmodem_INCLUDE_vendor-qmi-wwan=y\nCONFIG_PACKAGE_luci-app-qmodem_INCLUDE_generic-qmi-wwan=y\nCONFIG_PACKAGE_luci-app-qmodem_USE_TOM_CUSTOMIZED_QUECTEL_CM=y\nCONFIG_PACKAGE_luci-app-qmodem_USING_QWRT_QUECTEL_CM_5G=y\nCONFIG_PACKAGE_luci-app-qmodem_USING_NORMAL_QUECTEL_CM=y\nCONFIG_PACKAGE_luci-app-qmodem_INCLUDE_ADD_PCI_SUPPORT=y\nCONFIG_PACKAGE_luci-app-qmodem_INCLUDE_ADD_MTK_T7XX_SUPPORT=y\nCONFIG_PACKAGE_luci-app-qmodem_INCLUDE_ADD_QFIREHOSE_SUPPORT=y\nCONFIG_PACKAGE_luci-app-qmodem-hc=y\nCONFIG_PACKAGE_luci-app-qmodem-mwan=y\nCONFIG_PACKAGE_luci-app-qmodem-sms=y\nCONFIG_PACKAGE_luci-app-qmodem-ttl=y"
-    },
-    "https://github.com/xx-vv/quectel_cm_5G.git": {
-        "packages": []
-    },
-    "https://github.com/kenzok8/small-package.git": {
-        "packages": [
-            "luci-app-oaf",
-            "luci-app-partexp",
-            "luci-app-quickstart",
-            "luci-app-adguardhome",
-            "luci-app-UUGameAcc"
-        ],
-        "paths": [
-            "luci-app-oaf",
-            "luci-app-partexp",
-            "quickstart",
-            "luci-app-quickstart",
-            "luci-app-adguardhome",
-            "luci-app-UUGameAcc"
-        ],
-        "apk_black_list": ["luci-app-quickstart"]
-    },
-    "https://github.com/xiaorouji/openwrt-passwall2.git": {
-        "packages": [
-            "luci-app-passwall2"
-        ],
-        "paths": [
-            "luci-app-passwall2"
-        ]
-    }
+  "https://github.com/linkease/istore.git": {
+    "packages": ["luci-app-store"],
+    "apk_black_list": ["luci-app-store"]
+  },
+  "https://github.com/VIKINGYFY/packages.git": {
+    "packages": ["luci-app-wolplus"],
+    "paths": ["luci-app-wolplus"]
+  },
+  "https://github.com/lwb1978/openwrt-gecoosac.git": {
+    "packages": ["luci-app-gecoosac"]
+  },
+  "https://github.com/gdy666/luci-app-lucky.git": {
+    "packages": ["luci-app-lucky"]
+  },
+  "https://github.com/EasyTier/luci-app-easytier.git": {
+    "packages": ["luci-app-easytier"]
+  },
+  "https://github.com/OpenListTeam/OpenList-OpenWRT.git": {
+    "packages": ["luci-app-openlist"]
+  },
+  "https://github.com/FUjr/QModem.git": {
+    "packages": ["luci-app-qmodem"],
+    "other_configs": "CONFIG_PACKAGE_luci-app-qmodem_INCLUDE_vendor-qmi-wwan=y\nCONFIG_PACKAGE_luci-app-qmodem_INCLUDE_generic-qmi-wwan=y\nCONFIG_PACKAGE_luci-app-qmodem_USE_TOM_CUSTOMIZED_QUECTEL_CM=y\nCONFIG_PACKAGE_luci-app-qmodem_USING_QWRT_QUECTEL_CM_5G=y\nCONFIG_PACKAGE_luci-app-qmodem_USING_NORMAL_QUECTEL_CM=y\nCONFIG_PACKAGE_luci-app-qmodem_INCLUDE_ADD_PCI_SUPPORT=y\nCONFIG_PACKAGE_luci-app-qmodem_INCLUDE_ADD_MTK_T7XX_SUPPORT=y\nCONFIG_PACKAGE_luci-app-qmodem_INCLUDE_ADD_QFIREHOSE_SUPPORT=y\nCONFIG_PACKAGE_luci-app-qmodem-hc=y\nCONFIG_PACKAGE_luci-app-qmodem-mwan=y\nCONFIG_PACKAGE_luci-app-qmodem-sms=y\nCONFIG_PACKAGE_luci-app-qmodem-ttl=y"
+  },
+  "https://github.com/xx-vv/quectel_cm_5G.git": {
+    "packages": []
+  },
+  "https://github.com/kenzok8/small-package.git": {
+    "packages": [
+      "luci-app-oaf",
+      "luci-app-partexp",
+      "luci-app-quickstart",
+      "luci-app-adguardhome",
+      "luci-app-UUGameAcc"
+    ],
+    "paths": [
+      "luci-app-oaf",
+      "luci-app-partexp",
+      "quickstart",
+      "luci-app-quickstart",
+      "luci-app-adguardhome",
+      "luci-app-UUGameAcc"
+    ],
+    "apk_black_list": ["luci-app-quickstart"]
+  },
+  "https://github.com/xiaorouji/openwrt-passwall2.git": {
+    "packages": [
+      "luci-app-passwall2"
+    ]
+  },
+  "https://github.com/xiaorouji/openwrt-passwall-packages.git": {
+    "packages": []
+  }
 }

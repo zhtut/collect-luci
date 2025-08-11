@@ -21,7 +21,11 @@ def sync_package(git_url: str, branch: str = None, paths: list[str] = None):
     if branch:
         branch_params = f'-b {branch}'
 
-    short_name = git_url[git_url.rfind('/') + 1:]
+    splts = git_url.split('/')
+    short_name = splts[-1]
+    if short_name == 'packages' or short_name == 'packages.git':
+        if len(splts) > 1:
+            short_name = splts[-2] + '-' + splts[-1]
     short_name = short_name.replace('.git', '')
     log(f"仓库简称：{short_name}")
 
