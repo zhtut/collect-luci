@@ -4,7 +4,7 @@ PKG_NAME:=rem
 PKG_VERSION:=0.64.0
 PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE:=frp-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/fatedier/frp/tar.gz/v${PKG_VERSION}?
 PKG_HASH:=c755c0aaeec3999cb259a312f3327db205a834abf0beeb6410dcdc818d9719a4
 
@@ -24,10 +24,10 @@ include ../../lang/golang/golang-package.mk
 
 define Package/rem/install
 	$(INSTALL_DIR) $(1)/usr/bin/
-	$(INSTALL_BIN) $(GO_PKG_BUILD_BIN_DIR)/$(2) $(1)/usr/bin/
+	$(INSTALL_BIN) $(GO_PKG_BUILD_BIN_DIR)/frp$(3) $(1)/usr/bin/$(2)
 	$(INSTALL_DIR) $(1)/etc/rem/$(2).d/
-	$(INSTALL_DATA) $(PKG_BUILD_DIR)/conf/legacy/$(2)_legacy_full.ini $(1)/etc/rem/$(2).d/
-	$(INSTALL_DATA) $(PKG_BUILD_DIR)/conf/$(2)_full_example.toml $(1)/etc/rem/$(2).d/
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/conf/legacy/frp$(3)_legacy_full.ini $(1)/etc/rem/$(2).d/
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/conf/frp$(3)_full_example.toml $(1)/etc/rem/$(2).d/
 	$(INSTALL_DIR) $(1)/etc/config/
 	$(INSTALL_CONF) ./files/$(2).config $(1)/etc/config/$(2)
 	$(INSTALL_DIR) $(1)/etc/init.d/
@@ -59,11 +59,11 @@ define Package/rem/template
   endef
 
   define Package/$(1)/install
-    $(call Package/rem/install,$$(1),$(1))
+    $(call Package/rem/install,$$(1),$(1),$(3))
   endef
 endef
 
-$(eval $(call Package/rem/template,remc,client))
-$(eval $(call Package/rem/template,rems,server))
+$(eval $(call Package/rem/template,remc,client,c))
+$(eval $(call Package/rem/template,rems,server,s))
 $(eval $(call BuildPackage,remc))
 $(eval $(call BuildPackage,rems))
