@@ -79,8 +79,7 @@ white_list = [
     "sync_packages.py",
     ".git",
     "package_config.json",
-    ".gitignore",
-    "rem"
+    ".gitignore"
 ]
 log("先全部清除")
 files = os.listdir('.')
