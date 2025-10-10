@@ -49,6 +49,11 @@
       "luci-app-passwall2"
     ]
   },
+  "https://github.com/eamonxg/luci-theme-aurora.git":{
+    "packages": [
+      "luci-theme-aurora"
+    ]
+  },
   "https://github.com/xiaorouji/openwrt-passwall-packages.git": {
     "packages": []
   }
