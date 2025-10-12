@@ -50,9 +50,10 @@
     ]
   },
   "https://github.com/eamonxg/luci-theme-aurora.git":{
-    "packages": [
-      "luci-theme-aurora"
-    ]
+    "packages": [ "luci-theme-aurora" ]
+  },
+  "https://github.com/SAENE/luci-theme-design.git": {
+    "packages": [ "luci-theme-design" ]
   },
   "https://github.com/xiaorouji/openwrt-passwall-packages.git": {
     "packages": []
