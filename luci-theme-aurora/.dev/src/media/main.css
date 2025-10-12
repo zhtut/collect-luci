@@ -1067,11 +1067,11 @@
         }
 
         & > .col-9 {
-          @apply max-md:flex-[9_9_18rem] md:w-128;
+          @apply max-md:flex-[9_9_18rem] md:w-120;
         }
 
         & > .col-10 {
-          @apply max-md:flex-[10_10_100%] md:w-144;
+          @apply max-md:flex-[10_10_100%] md:w-128 md:max-w-136;
         }
       }
 
@@ -1096,8 +1096,12 @@
 
       & td,
       & .td {
-        @apply table-cell max-w-94 border-b border-gray-200 px-3 py-3 align-middle text-base break-words whitespace-normal text-gray-700 max-md:max-w-full max-md:flex-[1_1_50%] max-md:border-0 max-md:px-1 max-md:py-1 max-md:text-sm dark:border-gray-600/40 dark:text-gray-200;
+        @apply table-cell border-b border-gray-200 px-3 py-3 align-middle text-base break-words whitespace-normal text-gray-700 max-md:max-w-full max-md:flex-[1_1_50%] max-md:border-0 max-md:px-1 max-md:py-1 max-md:text-sm dark:border-gray-600/40 dark:text-gray-200;
         @apply before:hidden before:content-[attr(data-title)] before:max-md:mb-1 before:max-md:block before:max-md:text-xs before:max-md:font-medium before:max-md:tracking-wider before:max-md:text-slate-500 before:max-md:uppercase before:max-md:dark:text-slate-400;
+
+        &.cbi-value-field {
+          @apply break-all;
+        }
 
         &[width="100%"] {
           @apply w-full max-md:flex-[0_0_100%];
