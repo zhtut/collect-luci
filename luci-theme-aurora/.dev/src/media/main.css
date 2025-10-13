@@ -1000,7 +1000,9 @@
 
         &:first-child {
           & .th,
-          & .td {
+          & .td,
+          & th,
+          & td {
             @apply first:md:rounded-tl-2xl;
 
             @apply last:md:rounded-tr-2xl;
@@ -1088,9 +1090,13 @@
         }
 
         &[data-sortable-row="true"] {
-          @apply cursor-pointer transition-colors duration-200 select-none hover:bg-gray-50 dark:hover:bg-gray-700/70;
-          @apply after:ml-0.5 after:text-xs after:font-normal after:text-transparent after:transition-colors after:duration-200 after:content-['\2195'];
-          @apply hover:after:text-gray-400 dark:hover:after:text-gray-400;
+          @apply cursor-pointer select-none after:ml-0.5 after:text-xs after:text-gray-600 dark:after:text-gray-300;
+          &[data-sort-direction="asc"] {
+            @apply after:content-['\25B2'];
+          }
+          &[data-sort-direction="desc"] {
+            @apply after:content-['\25BC'];
+          }
         }
       }
 
@@ -1371,36 +1377,38 @@
       }
     }
   }
+
   @layer luci-mod-dashboard {
-    [data-page="admin-dashboard"] {
-      .Dashboard {
-        .section-content {
-          .title {
-            img {
-              &[src*=".svg"] {
-                @apply dark:invert;
-              }
+    .Dashboard {
+      & > .section-content {
+        & .dashboard-bg {
+          &.tr {
+            @apply rounded-none;
+          }
+          @apply bg-white/95 not-[.tr]:border not-[.tr]:border-slate-200/40 not-[.tr]:shadow-lg not-[.tr]:hover:border-slate-300/50 not-[.tr]:hover:shadow-xl max-md:bg-white/98 not-[.tr]:max-md:border not-[.tr]:max-md:border-slate-200/20 dark:bg-slate-800/95 not-[.tr]:dark:border-slate-600/30 not-[.tr]:dark:hover:border-slate-500/40 not-[.tr]:dark:hover:shadow-black/25 max-md:dark:bg-slate-800/98 not-[.tr]:max-md:dark:border-slate-700/15;
+        }
+
+        .title {
+          img {
+            &[src*=".svg"] {
+              @apply dark:invert;
             }
           }
+          h3 {
+            @apply border-b border-slate-200/50 pb-4 text-slate-900 max-md:mx-0 max-md:border-slate-200/30 max-md:pb-2 dark:border-slate-600/40 dark:text-slate-100 max-md:dark:border-slate-700/20;
+          }
+        }
 
-          .router-status-wifi {
-            .wifi-info {
-              .devices-info {
-                .tr {
-                  .td {
-                    @apply nth-3:relative nth-3:top-0 nth-3:w-full nth-3:px-0 max-md:flex-[1_1_50%];
-                  }
+        .router-status-wifi {
+          .wifi-info {
+            .devices-info {
+              .tr {
+                .td {
+                  @apply nth-3:relative nth-3:top-0 nth-3:w-full nth-3:px-0 max-md:flex-[1_1_50%];
                 }
               }
             }
           }
-        }
-
-        h3 {
-          @apply border-b border-slate-200/50 pb-4 text-slate-900 max-md:mx-0 max-md:border-slate-200/30 max-md:pb-2 dark:border-slate-600/40 dark:text-slate-100 max-md:dark:border-slate-700/20;
-        }
-        .dashboard-bg {
-          @apply bg-white/95 not-[.tr]:border not-[.tr]:border-slate-200/40 not-[.tr]:shadow-lg not-[.tr]:hover:border-slate-300/50 not-[.tr]:hover:shadow-xl max-md:bg-white/98 not-[.tr]:max-md:border not-[.tr]:max-md:border-slate-200/20 dark:bg-slate-800/95 not-[.tr]:dark:border-slate-600/30 not-[.tr]:dark:hover:border-slate-500/40 not-[.tr]:dark:hover:shadow-black/25 max-md:dark:bg-slate-800/98 not-[.tr]:max-md:dark:border-slate-700/15;
         }
       }
     }
