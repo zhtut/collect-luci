@@ -175,6 +175,10 @@
       code {
         @apply rounded bg-slate-200/80 px-2 py-1 font-mono text-sm text-slate-800 dark:bg-gray-700 dark:text-gray-200;
       }
+
+      a {
+        @apply text-aurora-sky dark:text-aurora-teal-400 no-underline;
+      }
     }
   }
 }
@@ -393,7 +397,7 @@
       @apply mt-auto flex flex-wrap items-center justify-center gap-2 border-t border-slate-200/50 py-2 text-xs text-slate-500 max-md:min-h-18 dark:border-slate-700/30 dark:text-slate-400;
 
       & a {
-        @apply text-aurora-sky hover:text-aurora-sky-600 dark:text-aurora-teal-400 dark:hover:text-aurora-teal-300 no-underline transition-all duration-150;
+        @apply hover:text-aurora-sky-600 dark:hover:text-aurora-teal-300;
       }
 
       & span {
