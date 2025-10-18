@@ -8,6 +8,11 @@
 Its inspiration comes from the **Aurora** — in Tromsø, Northern Norway, the daytime brings views of pure white snowy mountains, while at night, the sky comes alive with the dancing northern lights.  
 In this theme, I aim to reflect the same contrast: daytime mode as pure as snowy mountains, and nighttime mode as captivating as the aurora.
 
+> ⚠️ **Notice**  
+> The theme is currently in Beta, and the code updates frequently. The released packaged version on GitHub may not always be the latest.  
+> If possible, it is recommended to compile from source to get the newest version.  
+> If any issues are encountered, feel free to submit an issue — every bit of feedback helps make the theme better 🙏💖.
+
 ## Compatibility
 
 - **OpenWrt**: Since the theme uses ucode templates, it requires **OpenWrt 22.03** or later.
