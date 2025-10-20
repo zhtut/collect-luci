@@ -467,27 +467,19 @@
 
     input[type="radio"],
     input[type="checkbox"] {
-      @apply checked:border-aurora-sky checked:bg-aurora-sky dark:checked:border-aurora-teal-600 dark:checked:bg-aurora-teal-600 mr-3 h-4 w-4 cursor-pointer appearance-none hover:border-slate-400/60 dark:hover:border-slate-500/60;
+      @apply checked:border-aurora-sky checked:bg-aurora-sky dark:checked:border-aurora-teal-600 dark:checked:bg-aurora-teal-600 relative mr-3 h-4 w-4 cursor-pointer appearance-none hover:border-slate-400/60 dark:hover:border-slate-500/60;
+      @apply checked:after:absolute checked:after:top-1/2 checked:after:left-1/2 checked:after:size-3 checked:after:-translate-x-1/2 checked:after:-translate-y-1/2 checked:after:bg-white;
       &[disabled] {
         @apply cursor-not-allowed opacity-40 dark:opacity-30;
-      }
-      &:checked::after {
-        @apply absolute top-1/2 left-1/2 block -translate-x-1/2 -translate-y-1/2 text-white;
       }
     }
 
     input[type="radio"] {
-      @apply rounded-full;
-      &:checked::after {
-        @apply content-['\2022'];
-      }
+      @apply rounded-full checked:after:[mask:url('@assets/icons/radio.svg')_center/cover_no-repeat];
     }
 
     input[type="checkbox"] {
-      @apply rounded;
-      &:checked::after {
-        @apply content-['\2713'];
-      }
+      @apply rounded checked:after:[mask:url('@assets/icons/check.svg')_center/cover_no-repeat];
     }
 
     .cbi-checkbox {
@@ -548,6 +540,9 @@
         @apply m-0 list-none;
         & > li {
           @apply m-0 flex list-none items-center gap-2 p-0;
+          & > form {
+            @apply pointer-events-none;
+          }
           &[placeholder] {
             @apply hidden;
           }
@@ -605,6 +600,9 @@
         @apply border-aurora-sky ring-aurora-sky/20 dark:border-aurora-teal-400 dark:ring-aurora-teal-400/30 relative ring-2;
         & > ul.dropdown {
           @apply visible w-auto;
+          & > li[unselectable] {
+            @apply pointer-events-none opacity-40 dark:opacity-30;
+          }
         }
       }
 
@@ -1522,6 +1520,12 @@
      - Migration: Promote stable rules to appropriate layers (e.g., components/plugins) or delete once fixed upstream.
    */
 @layer patches {
+  @layer admin-network-network {
+    [data-name="bridge-vlan"] > div {
+      @apply max-md:!overflow-visible;
+    }
+  }
+
   @layer luci-app-openclash {
     [data-page="admin-services-openclash-log"] {
       @apply dark:bg-aurora-night-teal;
