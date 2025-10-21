@@ -110,7 +110,7 @@
     @apply md:dark:before:from-aurora-night-slate md:dark:before:via-aurora-night-teal md:dark:before:to-aurora-night-emerald;
 
     * {
-      @apply scrollbar-thin scrollbar-track-transparent scrollbar-thumb-slate-300/60 hover:scrollbar-thumb-slate-400/80 dark:scrollbar-thumb-slate-600/60 dark:hover:scrollbar-thumb-slate-500/80 m-0 box-border p-0;
+      @apply scrollbar-thin scrollbar-track-transparent scrollbar-thumb-slate-300/60 scrollbar-hover:scrollbar-thumb-slate-400/80 dark:scrollbar-thumb-slate-600/60 dark:scrollbar-hover:scrollbar-thumb-slate-500/80 m-0 box-border p-0;
     }
 
     body {
