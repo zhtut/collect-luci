@@ -57,5 +57,8 @@
   },
   "https://github.com/xiaorouji/openwrt-passwall-packages.git": {
     "packages": []
+  },
+  "https://github.com/Tokisaki-Galaxy/luci-app-tailscale-community.git": {
+    "packages": [ "luci-app-tailscale-community" ]
   }
 }
