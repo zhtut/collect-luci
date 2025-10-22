@@ -1,0 +1,118 @@
+name: Build OpenWrt Package
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  workflow_dispatch:
+
+env:
+  OPENWRT_VERSION: v24.10.3
+  PACKAGE_NAME: luci-app-tailscale-community
+
+jobs:
+  build:
+    name: Build for ${{ matrix.target.name }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          - name: x86_64
+            path: x86/64
+
+    steps:
+      # 步骤 1: 安装依赖
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential rsync unzip zstd
+
+      # 步骤 2: 检出代码
+      - name: Checkout package repository
+        uses: actions/checkout@v4
+
+      # 步骤 3: 下载并解压 OpenWrt SDK
+      - name: Download and extract OpenWrt SDK
+        run: |
+          # 从环境变量中移除 'v' 前缀以匹配版本号
+          release_version="${OPENWRT_VERSION#v}"
+          sdk_url_prefix="https://downloads.openwrt.org/releases/${release_version}/targets/${{ matrix.target.path }}"
+          sdk_filename=$(curl -s "$sdk_url_prefix/" | \
+                        grep -o '<a href="openwrt-sdk-.*-x86_64\.tar\.\(xz\|zst\)">' | \
+                        sed -e 's/.*<a href="//' -e 's/">//' | \
+                        head -n 1)
+
+          if [ -z "$sdk_filename" ]; then
+            echo "::error::Could not find SDK file at ${sdk_url_prefix}/"
+            echo "Available files:"
+            curl -s "$sdk_url_prefix/" | grep -o '<a href="[^"]*">[^<]*</a>' | sed -e 's/<a href="\(.*\)".*>\(.*\)/\1\t\2/'
+            exit 1
+          fi
+          
+          echo "Downloading SDK: ${sdk_url_prefix}/${sdk_filename}"
+          wget -q "${sdk_url_prefix}/${sdk_filename}"
+          
+          echo "Extracting SDK..."
+          tar -xf "$sdk_filename"
+          
+          echo "SDK_DIR=$(find . -maxdepth 1 -type d -name 'openwrt-sdk-*')" >> $GITHUB_ENV
+
+      # 步骤 4: 准备构建
+      - name: Copy package and update feeds
+        working-directory: ${{ env.SDK_DIR }}
+        run: |
+          cp -r ../${{ env.PACKAGE_NAME }} ./package/
+          ./scripts/feeds update -a
+          ./scripts/feeds install -a
+          echo "CONFIG_PACKAGE_${{ env.PACKAGE_NAME }}=m" > .config
+          make defconfig
+
+      # 步骤 5: 编译软件包
+      - name: Compile the package
+        working-directory: ${{ env.SDK_DIR }}
+        run: |
+          make package/${{ env.PACKAGE_NAME }}/compile V=s
+
+      # 步骤 6: 查找并准备 .ipk 文件
+      - name: Find and prepare .ipk file
+        id: find_ipk
+        working-directory: ${{ env.SDK_DIR }}
+        run: |
+          ipk_path=$(find ./bin/packages -name "${{ env.PACKAGE_NAME }}*.ipk" | head -n 1 | sed 's|^\./||')
+          if [ -z "$ipk_path" ]; then
+            echo "::error::IPK file not found in ./bin/packages/"
+            # 显示编译输出目录树，方便调试
+            echo "Directory tree of ./bin/:"
+            ls -R ./bin/
+            exit 1
+          fi
+          echo "Found IPK: $ipk_path"
+          echo "path=$ipk_path" >> $GITHUB_OUTPUT
+
+      # 步骤 7: 上传 .ipk 文件作为构建产物
+      - name: Upload .ipk artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.PACKAGE_NAME }}-${{ matrix.target.name }}
+          path: ${{ env.SDK_DIR }}/${{ steps.find_ipk.outputs.path }}
+          if-no-files-found: error
+
+  # 成功后发表评论
+  comment-on-commit:
+    name: Post comment on commit
+    runs-on: ubuntu-latest
+    needs: build
+    if: success()
+    permissions:
+      contents: write
+    steps:
+      - name: Comment on commit
+        uses: peter-evans/commit-comment@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          body: |
+            ✅ **${{ env.PACKAGE_NAME }}** SDK build successful for all targets!
+
+            Download compiled `.ipk` packages from the artifacts section below (login required):
+
+            [**View Action Run and Download Artifacts**](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
