@@ -9,11 +9,12 @@
 const callGetStatus = rpc.declare({ object: 'tailscale', method: 'get_status' });
 const callGetSettings = rpc.declare({ object: 'tailscale', method: 'get_settings' });
 const callSetSettings = rpc.declare({ object: 'tailscale', method: 'set_settings', params: ['form_data'] });
-const callDoLogin = rpc.declare({ object: 'tailscale', method: 'do_login' });
+const callDoLogin = rpc.declare({ object: 'tailscale', method: 'do_login', params: ['form_data'] });
 const callGetSubroutes = rpc.declare({ object: 'tailscale', method: 'get_subroutes' });
 let map;
 
 const tailscaleSettingsConf = [
+    [form.ListValue, 'fw_mode', _('Firewall Mode'), _('Select the firewall backend for Tailscale to use. Requires service restart to take effect.'), {values: ['nftables','iptables'],rmempty: false}],
     [form.Flag, 'accept_routes', _('Accept Routes'), _('Allow accepting routes announced by other nodes.'), { rmempty: false }],
     [form.Flag, 'advertise_exit_node', _('Advertise Exit Node'), _('Declare this device as an Exit Node.'), { rmempty: false }],
     [form.Value, 'exit_node', _('Exit Node'), _('Specify an exit node. Leave it blank and it will not be used.'), { rmempty: true }],
@@ -23,7 +24,7 @@ const tailscaleSettingsConf = [
 ];
 
 const daemonConf = [
-    [form.Value, 'daemon_mtu', _('Daemon MTU'), _('Set a custom MTU for the Tailscale daemon. Leave blank to use the default value.'), { datatype: 'uinteger', placeholder: '1280' }, { rmempty: false }],
+    //[form.Value, 'daemon_mtu', _('Daemon MTU'), _('Set a custom MTU for the Tailscale daemon. Leave blank to use the default value.'), { datatype: 'uinteger', placeholder: '1280' }, { rmempty: false }],
     [form.Flag, 'daemon_reduce_memory', _('Reduce Memory Usage'), _('Enabling this option can reduce memory usage, but it may sacrifice some performance (set GOGC=10).'), { rmempty: false }]
 ];
 
@@ -76,47 +77,30 @@ function formatBytes(bytes) {
     return parseFloat((bytes_num / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 }
 
-function formatLastSeen(dateString) {
-    if (!dateString) return 'N/A';
-    if (dateString === '0001-01-01T00:00:00Z') {
-        return 'Now';
-    }
-    const lastSeenDate = new Date(dateString);
-    // Check for a valid date.
-    if (isNaN(lastSeenDate.getTime())) {
-        return 'Invalid Date';
-    }
-    const now = new Date();
-    const diffSeconds = Math.round((now - lastSeenDate) / 1000);
-    if (diffSeconds < 0) {
-        return lastSeenDate.toLocaleString();
-    }
-    if (diffSeconds < 60) {
-        return 'Just now';
-    }
-    const diffMinutes = Math.floor(diffSeconds / 60);
-    if (diffMinutes < 60) {
-        return `${diffMinutes} ${diffMinutes === 1 ? 'minute' : 'minutes'} ago`;
-    }
-    const diffHours = Math.floor(diffMinutes / 60);
-    if (diffHours < 24) {
-        return `${diffHours} ${diffHours === 1 ? 'hour' : 'hours'} ago`;
-    }
-    const diffDays = Math.floor(diffHours / 24);
-    if (diffDays < 30) {
-        return `${diffDays} ${diffDays === 1 ? 'day' : 'days'} ago`;
-    }
-    const year = lastSeenDate.getFullYear();
-    const month = String(lastSeenDate.getMonth() + 1).padStart(2, '0');
-    const day = String(lastSeenDate.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
+function formatLastSeen(d) {
+	if (!d) return _('N/A');
+	if (d === '0001-01-01T00:00:00Z') return _('Now');
+	const t = new Date(d);
+	if (isNaN(t)) return _('Invalid Date');
+	const diff = (Date.now() - t) / 1000;
+	if (diff < 0) return t.toLocaleString();
+	if (diff < 60) return _('Just now');
+
+	const mins = diff / 60, hrs = mins / 60, days = hrs / 24;
+	const fmt = (n, s, p) => `${Math.floor(n)} ${Math.floor(n) === 1 ? _(s) : _(p)} ${_('ago')}`;
+
+	if (mins < 60) return fmt(mins, 'minute', 'minutes');
+	if (hrs < 24) return fmt(hrs, 'hour', 'hours');
+	if (days < 30) return fmt(days, 'day', 'days');
+
+	return t.toISOString().slice(0, 10);
 }
 
 async function initializeRegionMap() {
     try {
         const response = await fetch(derpMapUrl);
         if (!response.ok) {
-            console.error('Failed to fetch region map:', response.statusText);
+            //error('Failed to fetch region map:', response.statusText);
             return;
         }
         const data = await response.json();
@@ -126,9 +110,8 @@ async function initializeRegionMap() {
             const name = region.RegionName;
             regionCodeMap[code] = name;
         }
-        console.log('Region map initialized successfully.');
     } catch (error) {
-        console.error('Error initializing region map:', error);
+        //console.error('Error initializing region map:', error);
     }
 }
 
@@ -285,12 +268,12 @@ return view.extend({
             L.resolveDefault(callGetSettings(), { accept_routes: false }),
             L.resolveDefault(callGetSubroutes(), { routes: [] })
         ])
-        .then(function([status, settings_from_rpc, subroutes]) { 
-
+        .then(function([status, settings_from_rpc, subroutes]) {
             return uci.load('tailscale').then(function() {
                 if (uci.get('tailscale', 'settings') === null) {
+                    // No existing settings found; initialize UCI with RPC settings
                     uci.add('tailscale', 'settings', 'settings');
-
+                    uci.set('tailscale', 'settings', 'fw_mode', settings_from_rpc.fw_mode);
                     uci.set('tailscale', 'settings', 'accept_routes', (settings_from_rpc.accept_routes ? '1' : '0'));
                     uci.set('tailscale', 'settings', 'advertise_exit_node', ((settings_from_rpc.advertise_exit_node || false) ? '1' : '0'));
                     uci.set('tailscale', 'settings', 'advertise_routes', (settings_from_rpc.advertise_routes || []).join(', '));
@@ -351,6 +334,13 @@ return view.extend({
         // Create the "General Settings" tab and apply tailscaleSettingsConf
         s.tab('general', _('General Settings'));
 
+        const customLoginUrl = s.taboption('general', form.Value, 'custom_login_url', 
+            _('Custom Login Server'), 
+            _('Optional: Specify a custom control server URL (e.g., a Headscale instance). Leave blank for default Tailscale control plane.')
+        );
+        customLoginUrl.placeholder = '';
+        customLoginUrl.rmempty = true;
+
         const loginBtn = s.taboption('general', form.Button, '_login', _('Login'), _('Click to get a login URL for this device.'));
         loginBtn.inputstyle = 'apply';
         loginBtn.id = 'tailscale_login_btn';
@@ -358,6 +348,8 @@ return view.extend({
         loginBtn.disabled = (status.status != 'logout');
 
         loginBtn.onclick = function() {
+            const customUrlInput = document.getElementById('widget.cbid.tailscale.settings.custom_login_url');
+            const customUrl = customUrlInput ? customUrlInput.value : '';
             const loginWindow = window.open('', '_blank');
             if (!loginWindow) {
                 ui.addNotification(null, E('p', _('Could not open a new tab. Please disable your pop-up blocker for this site and try again.')), 'error');
@@ -365,10 +357,13 @@ return view.extend({
             }
             // Display a prompt message in the new window
             loginWindow.document.write(_('Requesting Tailscale login URL... Please wait...<br>The looggest time to get the URL is about 30 seconds.'));
-
+            ui.showModal(_('Requesting Login URL...'), E('em', {}, _('Please wait.')));
+            const payload = {
+                loginurl: customUrl || ''
+            };
             // Show a "loading" modal and execute the asynchronous RPC call
             ui.showModal(_('Requesting Login URL...'), E('em', {}, _('Please wait.')));
-            return callDoLogin().then(function(res) {
+            return callDoLogin(payload).then(function(res) {
                 ui.hideModal();
                 if (res && res.url) {
                     // After successfully obtaining the URL, redirect the previously opened tab
@@ -418,11 +413,8 @@ return view.extend({
                 indicator.click();
                 setTimeout(function() {
                     const discardButton = document.querySelector('.cbi-button.cbi-button-reset');
-                    if (discardButton) {
-                        console.log('Found the "Discard" button in the modal. Clicking it...');
-                        discardButton.click();
-                    } else {
-                        console.error('Could not find the "Discard" button in the modal!');
+                    if (discardButton) { discardButton.click(); } else {
+                        //console.error('Could not find the "Discard" button in the modal!');
                     }
                 }, 100);
             }
@@ -438,7 +430,7 @@ return view.extend({
             });
         }).catch(function(err) {
             ui.hideModal(); 
-            console.error('Save failed:', err); 
+            //console.error('Save failed:', err); 
             ui.addNotification(null, E('p', _('Failed to save settings: %s').format(err.message)), 'error');
         });
     },

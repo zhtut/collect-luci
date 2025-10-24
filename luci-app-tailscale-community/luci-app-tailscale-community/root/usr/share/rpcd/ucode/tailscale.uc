@@ -6,6 +6,7 @@ import { access, popen, readfile, writefile, unlink } from 'fs';
 import { cursor } from 'uci';
 
 const uci = cursor();
+// Keep in doubt about its usefulness
 const env_script_path = "/etc/profile.d/tailscale-env.sh";
 const ori_env_script_content = `#!/bin/sh
 # This script is managed by luci-app-tailscale-community.
@@ -51,8 +52,7 @@ methods.get_status = {
 			domain_name: '',
 			peers: []
 		};
-		if (access('/usr/sbin/tailscale')==true || access('/usr/bin/tailscale')==true){
-		}else{
+		if (access('/usr/sbin/tailscale')==true || access('/usr/bin/tailscale')==true){ }else{
 			data.status = 'not_installed';
 			return data;
 		}
@@ -64,7 +64,7 @@ methods.get_status = {
 				let status_data = json(join('',status_json_output.stdout));
 				data.version = status_data.Version || 'Unknown';
 				data.health = status_data.Health || '';
-				data.TUNMode = status_data.TUN;
+				data.TUNMode = status_data.TUN || 'true';
 				if (status_data.BackendState == 'Running') { data.status =  'running'; }
 				if (status_data.BackendState == 'NeedsLogin') { data.status =  'logout'; }
 
@@ -80,7 +80,7 @@ methods.get_status = {
 						hostname: split(p.DNSName,'.')[0] || '',
 						ostype: p.OS,
 						online: p.Online,
-						linkadress: (p.CurAddr=="") ? p.Relay : p.CurAddr,
+						linkadress: (!p.CurAddr) ? p.Relay : p.CurAddr,
 						lastseen: p.LastSeen,
 						tx: '',
 						rx: ''
@@ -118,15 +118,16 @@ methods.get_settings = {
 
 				let status_data = json(b64dec(state_data[profiles_key]));
 				if (status_data != null) {
-					settings.accept_routes = status_data.RouteAll;
-					settings.advertise_exit_node = status_data.AdvertiseExitNode;
+					settings.accept_routes = status_data.RouteAll || false;
+					settings.advertise_exit_node = status_data.AdvertiseExitNode || false;
 					settings.advertise_routes = status_data.AdvertiseRoutes || [];
 					settings.exit_node = status_data.ExitNodeID || "";
-					settings.exit_node_allow_lan_access = status_data.ExitNodeAllowLANAccess;
-					settings.shields_up = status_data.ShieldsUp;
-					settings.ssh = status_data.RunSSH;
-					settings.runwebclient = status_data.RunWebClient;
-					settings.nosnat = status_data.NoSNAT;
+					settings.exit_node_allow_lan_access = status_data.ExitNodeAllowLANAccess || false;
+					settings.shields_up = status_data.ShieldsUp || false;
+					settings.ssh = status_data.RunSSH || false;
+					settings.runwebclient = status_data.RunWebClient || false;
+					settings.nosnat = status_data.NoSNAT || false;
+					settings.fw_mode = split(uci.get('tailscale', 'settings', 'fw_mode'),' ')[0] || 'nftables';
 				}
 				}
 			} catch (e) { /* ignore */ }
@@ -166,24 +167,31 @@ methods.set_settings = {
 		uci.save('tailscale');
 		uci.commit('tailscale');
 
-		let new_mtu = form_data.daemon_mtu || "";
-		let new_reduce_mem = form_data.daemon_reduce_memory || "0";
-		if (access('/etc/profile.d/tailscale-env.sh')==false) {
-			if (new_mtu != "" || new_reduce_mem == "1") {
+		// process reduce memory https://github.com/GuNanOvO/openwrt-tailscale
+		// some new versions of Tailscale may not work well with this method
+		if (access(env_script_path)==false) {
+			if (form_data.daemon_mtu != "" || form_data.daemon_reduce_memory != "") {
 				try{ mkdir('/etc/profile.d'); } catch (e) { }
 				writefile(env_script_path, env_script_content);
 				exec('chmod 755 '+env_script_path);
 				popen('/bin/sh -c /etc/init.d/tailscale restart &');
 			}
 		}else{
-			if (new_mtu == "" || new_reduce_mem == "0") { unlink(env_script_path); }
+			if (form_data.daemon_mtu == "" && form_data.daemon_reduce_memory == "") { unlink(env_script_path); }
 		}
 		return { success: true };
 	}
 };
 
 methods.do_login = {
-	call: function() {
+	args: { form_data: {} },
+	call: function(request) {
+		const form_data = request.args.form_data;
+		let loginargs;
+		if (form_data == null || length(form_data) == 0) {
+			return { error: 'Missing or invalid form_data parameter. Please provide login data.' };
+		}
+
 		let status=methods.get_status.call();
 		if (status.status != 'logout') {
 			return { error: 'Tailscale is already logged in and running.' };
@@ -196,16 +204,22 @@ methods.do_login = {
 			let tresult = exec('tailscale status');
 			for (let line in tresult.stdout) {
 				let trline = trim(line);
-				if (index(trline, 'login.tailscale.com') != -1) {
+				if (index(trline, 'http') != -1) {
 					let parts = split(trline, ' ');
 					for (let part in parts) {
-						if (index(part, 'login.tailscale.com') != -1) {
+						if (index(part, 'http') != -1) {
 							return { url: part };
 						}
 					}
 				}
 			}
-			popen('tailscale login&','r');
+			// tailscale login --login-server https://myvlan.example.com&
+			if (form_data.loginserver!='') {
+				loginargs = '--login-server '+form_data.loginserver+' &';
+			} else{
+				loginargs = '&';
+			}
+			popen('tailscale login '+loginargs,'r');
 			sleep(interval);
 		}
 		return { error: 'Could not retrieve login URL from tailscale command.' };
