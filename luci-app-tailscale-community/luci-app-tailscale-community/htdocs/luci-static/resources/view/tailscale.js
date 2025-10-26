@@ -97,21 +97,51 @@ function formatLastSeen(d) {
 }
 
 async function initializeRegionMap() {
+    const cacheKey = 'tailscale_derp_map_cache';
+    const ttl = 7 * 24 * 60 * 60 * 1000; // 7 days in milliseconds
+
+    try {
+        const cachedItem = localStorage.getItem(cacheKey);
+        if (cachedItem) {
+            const cached = JSON.parse(cachedItem);
+            // Check if the cached data is still valid (not expired)
+            if (Date.now() - cached.timestamp < ttl) {
+                regionCodeMap = cached.data;
+                return;
+            }
+        }
+    } catch (e) {
+        ui.addNotification(null, E('p', _('Error reading cached DERP region map: %s').format(e.message || 'Unknown error')), 'error');
+    }
+
+    // If no valid cache, fetch from the network
     try {
         const response = await fetch(derpMapUrl);
         if (!response.ok) {
-            //error('Failed to fetch region map:', response.statusText);
             return;
         }
         const data = await response.json();
+        const newRegionMap = {};
         for (const regionId in data.Regions) {
             const region = data.Regions[regionId];
             const code = region.RegionCode.toLowerCase();
             const name = region.RegionName;
-            regionCodeMap[code] = name;
+            newRegionMap[code] = name;
+        }
+        regionCodeMap = newRegionMap;
+
+        // Save the newly fetched data to the cache
+        try {
+            const itemToCache = {
+                timestamp: Date.now(),
+                data: regionCodeMap
+            };
+            localStorage.setItem(cacheKey, JSON.stringify(itemToCache));
+        } catch (e) {
+            ui.addNotification(null, E('p', _('Error caching DERP region map: %s').format(e.message || 'Unknown error')), 'error');
         }
     } catch (error) {
-        //console.error('Error initializing region map:', error);
+        ui.addNotification(null, E('p', _('Error fetching DERP region map: %s').format(error.message || 'Unknown error')), 'error');
     }
 }
 
@@ -334,22 +364,41 @@ return view.extend({
         // Create the "General Settings" tab and apply tailscaleSettingsConf
         s.tab('general', _('General Settings'));
 
-        const customLoginUrl = s.taboption('general', form.Value, 'custom_login_url', 
-            _('Custom Login Server'), 
-            _('Optional: Specify a custom control server URL (e.g., a Headscale instance). Leave blank for default Tailscale control plane.')
-        );
-        customLoginUrl.placeholder = '';
-        customLoginUrl.rmempty = true;
+        defTabOpts(s, 'general', tailscaleSettingsConf, { optional: false });
+        const o = s.taboption('general', form.DynamicList, 'advertise_routes', _('Advertise Routes'),_('Advertise subnet routes behind this device. Select from the detected subnets below or enter custom routes (comma-separated).'));
+        if (subroutes.length > 0) {
+            subroutes.forEach(function(subnet) {
+                o.value(subnet, subnet);
+            });
+        }
+		o.rmempty = true;
 
-        const loginBtn = s.taboption('general', form.Button, '_login', _('Login'), _('Click to get a login URL for this device.'));
+        const loginBtn = s.taboption('general', form.Button, '_login', _('Login'),
+        _('Click to get a login URL for this device.<br>If the timeout is displayed, you can refresh the page and click Login again.'));
         loginBtn.inputstyle = 'apply';
         loginBtn.id = 'tailscale_login_btn';
         // Set initial state based on loaded data
         loginBtn.disabled = (status.status != 'logout');
 
+        const customLoginUrl = s.taboption('general', form.Value, 'custom_login_url', 
+            _('Custom Login Server'), 
+            _('Optional: Specify a custom control server URL (e.g., a Headscale instance, http(s)://ex.com).<br>Leave blank for default Tailscale control plane.')
+        );
+        customLoginUrl.placeholder = '';
+        customLoginUrl.rmempty = true;
+        
+        const customLoginAuthKey = s.taboption('general', form.Value, 'custom_login_AuthKey', 
+            _('Custom Login Server Auth Key'), 
+            _('Optional: Specify an authentication key for the custom control server. Leave blank if not required.<br>If you are using custom login server but not providing an Auth Key, will redirect to the login page without pre-filling the key.')
+        );
+        customLoginAuthKey.placeholder = '';
+        customLoginAuthKey.rmempty = true;
+
         loginBtn.onclick = function() {
-            const customUrlInput = document.getElementById('widget.cbid.tailscale.settings.custom_login_url');
-            const customUrl = customUrlInput ? customUrlInput.value : '';
+            const customServerInput = document.getElementById('widget.cbid.tailscale.settings.custom_login_url');
+            const customServer = customServerInput ? customServerInput.value : '';
+            const customserverAuthInput = document.getElementById('widget.cbid.tailscale.settings.custom_login_AuthKey');
+            const customServerAuth = customserverAuthInput ? customserverAuthInput.value : '';
             const loginWindow = window.open('', '_blank');
             if (!loginWindow) {
                 ui.addNotification(null, E('p', _('Could not open a new tab. Please disable your pop-up blocker for this site and try again.')), 'error');
@@ -359,7 +408,8 @@ return view.extend({
             loginWindow.document.write(_('Requesting Tailscale login URL... Please wait...<br>The looggest time to get the URL is about 30 seconds.'));
             ui.showModal(_('Requesting Login URL...'), E('em', {}, _('Please wait.')));
             const payload = {
-                loginurl: customUrl || ''
+                loginserver: customServer || '',
+                loginserver_authkey: customServerAuth || ''
             };
             // Show a "loading" modal and execute the asynchronous RPC call
             ui.showModal(_('Requesting Login URL...'), E('em', {}, _('Please wait.')));
@@ -378,16 +428,7 @@ return view.extend({
                 ui.addNotification(null, E('p', _('Failed to get login URL: %s').format(err.message || 'Unknown error')), 'error');
             });
         };
-
-        defTabOpts(s, 'general', tailscaleSettingsConf, { optional: false });
-        const o = s.taboption('general', form.DynamicList, 'advertise_routes', _('Advertise Routes'),_('Advertise subnet routes behind this device. Select from the detected subnets below or enter custom routes (comma-separated).'));
-        if (subroutes.length > 0) {
-            subroutes.forEach(function(subnet) {
-                o.value(subnet, subnet);
-            });
-        }
-		o.rmempty = true;
-
+        
         // Create the "Daemon Settings" tab and apply daemonConf
         s.tab('daemon', _('Daemon Settings'));
         defTabOpts(s, 'daemon', daemonConf, { optional: false });
@@ -404,25 +445,14 @@ return view.extend({
             return callSetSettings(data).then(function (response) {
                 if (response.success) {
                     ui.hideModal();
-                setTimeout(function() {
-                        ui.addNotification(null, E('p', _('Tailscale settings applied successfully.')), 'info');
-                }, 1000);
-        try {
-            const indicator = document.querySelector('span[data-indicator="uci-changes"][data-clickable="true"]');
-            if (indicator) {
-                indicator.click();
-                setTimeout(function() {
-                    const discardButton = document.querySelector('.cbi-button.cbi-button-reset');
-                    if (discardButton) { discardButton.click(); } else {
-                        //console.error('Could not find the "Discard" button in the modal!');
+                    setTimeout(function() {
+                            ui.addNotification(null, E('p', _('Tailscale settings applied successfully.')), 'info');
+                    }, 1000);
+                    try {
+                        L.ui.changes.revert();
+                    } catch (error) {
+                        ui.addNotification(null, E('p', _('Error saving settings: %s').format(error || 'Unknown error')), 'error');
                     }
-                }, 100);
-            }
-        } catch (error) {
-            ui.addNotification(null, E('p', _('Error saving settings: %s').format(error || 'Unknown error')), 'error');
-        }
-                // Reload the page to display the latest status
-                setTimeout(function () { window.location.reload(); }, 2000);
                 } else {
                     ui.hideModal();
                     ui.addNotification(null, E('p', _('Error applying settings: %s').format(response.error || 'Unknown error')), 'error');

@@ -187,7 +187,7 @@ methods.do_login = {
 	args: { form_data: {} },
 	call: function(request) {
 		const form_data = request.args.form_data;
-		let loginargs;
+		let loginargs = [];
 		if (form_data == null || length(form_data) == 0) {
 			return { error: 'Missing or invalid form_data parameter. Please provide login data.' };
 		}
@@ -197,6 +197,22 @@ methods.do_login = {
 			return { error: 'Tailscale is already logged in and running.' };
 		}
 
+        // --- 1. Prepare and Run Login Command (Once) ---
+        const loginserver = trim(form_data.loginserver) || '';
+        const loginserver_authkey = trim(form_data.loginserver_authkey) || '';
+
+        if (loginserver!='') {
+            push(loginargs,'--login-server '+loginserver);
+            if (loginserver_authkey!='') {
+                push(loginargs,'--auth-key '+loginserver_authkey);
+            }
+        }
+
+        // Run the command in the background using /bin/sh -c to handle the '&' correctly
+        let login_cmd = 'tailscale login '+join(' ', loginargs);
+        popen('/bin/sh -c "' + login_cmd + ' &"', 'r');
+
+        // --- 2. Loop to Check Status for URL ---
 		let max_attempts = 15;
 		let interval = 2000;
 
@@ -213,16 +229,9 @@ methods.do_login = {
 					}
 				}
 			}
-			// tailscale login --login-server https://myvlan.example.com&
-			if (form_data.loginserver!='') {
-				loginargs = '--login-server '+form_data.loginserver+' &';
-			} else{
-				loginargs = '&';
-			}
-			popen('tailscale login '+loginargs,'r');
 			sleep(interval);
 		}
-		return { error: 'Could not retrieve login URL from tailscale command.' };
+		return { error: 'Could not retrieve login URL from tailscale command after 30 seconds.' };
 	}
 };
 
