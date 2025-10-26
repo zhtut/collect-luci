@@ -7,7 +7,9 @@
 
 @custom-variant dark (&:where([data-darkmode=true], [data-darkmode=true] *));
 
-@plugin "tailwind-scrollbar";
+@plugin 'tailwind-scrollbar' {
+  nocompatible: true;
+}
 
 @theme {
   --font-sans:
@@ -109,16 +111,16 @@
     @apply md:before:bg-gradient-to-br md:before:from-slate-50 md:before:via-slate-100 md:before:to-slate-200;
     @apply md:dark:before:from-aurora-night-slate md:dark:before:via-aurora-night-teal md:dark:before:to-aurora-night-emerald;
 
-    * {
-      @apply scrollbar-thin scrollbar-track-transparent scrollbar-thumb-slate-300/60 scrollbar-hover:scrollbar-thumb-slate-400/80 dark:scrollbar-thumb-slate-600/60 dark:scrollbar-hover:scrollbar-thumb-slate-500/80 m-0 box-border p-0;
-    }
-
     body {
       @apply bg-transparent text-sm leading-relaxed font-normal text-slate-900 transition-all duration-300 dark:text-slate-100;
       &.modal-overlay-active {
         @apply h-screen overflow-hidden;
       }
     }
+  }
+
+  * {
+    @apply scrollbar-thumb-rounded-full scrollbar-w-2 scrollbar-h-1.5 scrollbar dark:scrollbar-hover:scrollbar-thumb-slate-300/70 scrollbar-hover:scrollbar-thumb-slate-500/70 scrollbar-track-slate-100 scrollbar-thumb-slate-400/60 dark:scrollbar-track-slate-800 dark:scrollbar-thumb-slate-400/60 max-md:scrollbar-w-1 max-md:scrollbar-h-1;
   }
 
   h1,
