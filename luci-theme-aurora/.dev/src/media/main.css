@@ -105,7 +105,12 @@
     src: url("./fonts/lato-v24-latin-regular.woff2") format("woff2");
   }
 
+  *:not(html) {
+    @apply scrollbar-thumb-rounded-full scrollbar-thin scrollbar-track-transparent scrollbar-thumb-slate-500/70 dark:scrollbar-thumb-slate-300/65;
+  }
+
   html {
+    @apply scrollbar-thumb-rounded-full scrollbar-thin scrollbar-track-slate-100 scrollbar-thumb-slate-500/70 dark:scrollbar-track-slate-900 dark:scrollbar-thumb-slate-300/65;
     @apply max-md:dark:bg-aurora-night-teal relative h-full font-sans max-md:bg-slate-100;
     @apply md:before:pointer-events-none md:before:fixed md:before:inset-0 md:before:-z-10;
     @apply md:before:bg-gradient-to-br md:before:from-slate-50 md:before:via-slate-100 md:before:to-slate-200;
@@ -117,10 +122,6 @@
         @apply h-screen overflow-hidden;
       }
     }
-  }
-
-  * {
-    @apply scrollbar-thumb-rounded-full scrollbar-w-2 scrollbar-h-1.5 scrollbar dark:scrollbar-hover:scrollbar-thumb-slate-300/70 scrollbar-hover:scrollbar-thumb-slate-500/70 scrollbar-track-slate-100 scrollbar-thumb-slate-400/60 dark:scrollbar-track-slate-800 dark:scrollbar-thumb-slate-400/60 max-md:scrollbar-w-1 max-md:scrollbar-h-1;
   }
 
   h1,

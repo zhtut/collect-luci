@@ -6,16 +6,7 @@ import { access, popen, readfile, writefile, unlink } from 'fs';
 import { cursor } from 'uci';
 
 const uci = cursor();
-// Keep in doubt about its usefulness
 const env_script_path = "/etc/profile.d/tailscale-env.sh";
-const ori_env_script_content = `#!/bin/sh
-# This script is managed by luci-app-tailscale-community.
-uci_get_state() { uci get tailscale.settings."$1" 2>/dev/null; }
-if [ "$(uci_get_state daemon_reduce_memory)" = "1" ]; then export GOGC=10; fi
-TS_MTU=$(uci_get_state daemon_mtu)
-if [ -n "$TS_MTU" ]; then export TS_DEBUG_MTU="$TS_MTU"; fi
-`;
-const env_script_content = replace(ori_env_script_content, /\r/g, '');
 
 function exec(command) {
 	let stdout_content = '';
@@ -89,9 +80,6 @@ methods.get_status = {
 			} catch (e) { /* ignore */ }
 		}
 
-		for (let key in peer_map) {
-			push(data.peers,peer_map[key]);
-		}
 		data.peers = peer_map;
 		return data;
 	}
@@ -150,6 +138,8 @@ methods.set_settings = {
 		push(args,'--exit-node-allow-lan-access=' + (form_data.exit_node_allow_lan_access == '1'));
 		push(args,'--ssh=' + (form_data.ssh == '1'));
 		push(args,'--shields-up=' + (form_data.shields_up == '1'));
+		push(args,'--webclient=' + (form_data.runwebclient == '1'));
+		push(args,'--snat-subnet-routes=' + (form_data.nosnat != '1'));
 		push(args,'--advertise-routes ' + (join(',',form_data.advertise_routes) || '\"\"'));
 		push(args,'--exit-node ' + (form_data.exit_node || '\"\"'));
 		push(args,'--hostname ' + (form_data.hostname || '\"\"'));
@@ -169,15 +159,9 @@ methods.set_settings = {
 
 		// process reduce memory https://github.com/GuNanOvO/openwrt-tailscale
 		// some new versions of Tailscale may not work well with this method
-		if (access(env_script_path)==false) {
-			if (form_data.daemon_mtu != "" || form_data.daemon_reduce_memory != "") {
-				try{ mkdir('/etc/profile.d'); } catch (e) { }
-				writefile(env_script_path, env_script_content);
-				exec('chmod 755 '+env_script_path);
-				popen('/bin/sh -c /etc/init.d/tailscale restart &');
-			}
-		}else{
-			if (form_data.daemon_mtu == "" && form_data.daemon_reduce_memory == "") { unlink(env_script_path); }
+		if (form_data.daemon_mtu != "" || form_data.daemon_reduce_memory != "") {
+			exec('/bin/sh -c '+env_script_path+' &');
+			popen('/bin/sh -c /etc/init.d/tailscale restart &');
 		}
 		return { success: true };
 	}
@@ -197,22 +181,22 @@ methods.do_login = {
 			return { error: 'Tailscale is already logged in and running.' };
 		}
 
-        // --- 1. Prepare and Run Login Command (Once) ---
-        const loginserver = trim(form_data.loginserver) || '';
-        const loginserver_authkey = trim(form_data.loginserver_authkey) || '';
+		// --- 1. Prepare and Run Login Command (Once) ---
+		const loginserver = trim(form_data.loginserver) || '';
+		const loginserver_authkey = trim(form_data.loginserver_authkey) || '';
 
-        if (loginserver!='') {
-            push(loginargs,'--login-server '+loginserver);
-            if (loginserver_authkey!='') {
-                push(loginargs,'--auth-key '+loginserver_authkey);
-            }
-        }
+		if (loginserver!='') {
+			push(loginargs,'--login-server '+loginserver);
+			if (loginserver_authkey!='') {
+				push(loginargs,'--auth-key '+loginserver_authkey);
+			}
+		}
 
-        // Run the command in the background using /bin/sh -c to handle the '&' correctly
-        let login_cmd = 'tailscale login '+join(' ', loginargs);
-        popen('/bin/sh -c "' + login_cmd + ' &"', 'r');
+		// Run the command in the background using /bin/sh -c to handle the '&' correctly
+		let login_cmd = 'tailscale login '+join(' ', loginargs);
+		popen('/bin/sh -c "' + login_cmd + ' &"', 'r');
 
-        // --- 2. Loop to Check Status for URL ---
+		// --- 2. Loop to Check Status for URL ---
 		let max_attempts = 15;
 		let interval = 2000;
 

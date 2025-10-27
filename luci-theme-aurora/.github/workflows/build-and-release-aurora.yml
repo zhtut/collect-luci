@@ -45,21 +45,39 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends build-essential curl ca-certificates xz-utils zstd git python3 rsync
 
-      - name: Download SDK
+      - name: Get SDK metadata
+        id: sdk
         run: |
-          mkdir -p "$TMP"
           INDEX_URL="${{ matrix.target.sdk_url }}/targets/${{ matrix.target.cpu_dir }}/${{ matrix.target.sub_dir }}/"
           SDK_TAR=$(curl -s "$INDEX_URL" | grep -oE "openwrt-sdk[^\"]*${{ matrix.target.sdk_cpu }}[^\"]*\.tar\.(zst|xz)" | head -n 1)
-          curl -SLk --connect-timeout 30 --retry 2 "$INDEX_URL/$SDK_TAR" -o "$TMP/$SDK_TAR"
+
+          echo "SDK: $SDK_TAR"
+          curl -sI "$INDEX_URL/$SDK_TAR" | grep -iE '^(etag|last-modified|content-length):' > .sdk-meta
+          cat .sdk-meta
+
+          echo "url=$INDEX_URL" >> $GITHUB_OUTPUT
+          echo "tar=$SDK_TAR" >> $GITHUB_OUTPUT
+
+      - name: Cache SDK
+        id: cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.TMP }}/${{ matrix.target.sdk_dir }}
+          key: ${{ steps.sdk.outputs.tar }}-${{ matrix.target.type }}-${{ hashFiles('.sdk-meta') }}
+
+      - name: Download SDK
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: |
+          echo "Cache MISS - Downloading SDK"
+          mkdir -p "$TMP"
+          curl -SLk --connect-timeout 30 --retry 2 "${{ steps.sdk.outputs.url }}/${{ steps.sdk.outputs.tar }}" -o "$TMP/${{ steps.sdk.outputs.tar }}"
           cd "$TMP"
-          if echo "$SDK_TAR" | grep -q \.zst$; then
-            zstd -d "$SDK_TAR" -o SDK.tar
-            tar xf SDK.tar
+          if echo "${{ steps.sdk.outputs.tar }}" | grep -q \.zst$; then
+            zstd -d "${{ steps.sdk.outputs.tar }}" -o SDK.tar && tar xf SDK.tar
           else
-            tar xf "$SDK_TAR"
+            tar xf "${{ steps.sdk.outputs.tar }}"
           fi
-          SDK_DIR=$(ls -d openwrt-sdk-* | head -n 1)
-          mv "$SDK_DIR" "${{ matrix.target.sdk_dir }}"
+          mv $(ls -d openwrt-sdk-* | head -n 1) "${{ matrix.target.sdk_dir }}"
 
       - name: Copy ${{ env.THEME }} source
         run: |
