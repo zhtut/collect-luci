@@ -5,11 +5,11 @@
 
 include $(TOPDIR)/rules.mk
 
-LUCI_TITLE:=Aurora Theme (ucode template)
+LUCI_TITLE:=Aurora Theme (A modern browser theme built with Vite and Tailwind CSS)
 LUCI_DEPENDS:=+luci-base
 
-PKG_VERSION:=0.6.8_beta
-PKG_RELEASE:=20251025
+PKG_VERSION:=0.6.9_beta
+PKG_RELEASE:=20251026
 PKG_LICENSE:=Apache-2.0
 
 LUCI_MINIFY_CSS:=

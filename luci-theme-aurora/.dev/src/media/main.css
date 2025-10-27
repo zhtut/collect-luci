@@ -112,7 +112,7 @@
     @apply md:dark:before:from-aurora-night-slate md:dark:before:via-aurora-night-teal md:dark:before:to-aurora-night-emerald;
 
     body {
-      @apply bg-transparent text-sm leading-relaxed font-normal text-slate-900 transition-all duration-300 dark:text-slate-100;
+      @apply flex flex-col bg-transparent text-sm leading-relaxed font-normal text-slate-900 transition-all duration-300 dark:text-slate-100;
       &.modal-overlay-active {
         @apply h-screen overflow-hidden;
       }
@@ -263,7 +263,7 @@
       @apply mx-auto min-h-[calc(100vh-4rem)] w-11/12 max-w-6xl px-4 max-md:w-full max-md:px-3;
 
       #view {
-        @apply mx-0 mb-2 w-full p-0 shadow-none transition-all duration-300 empty:hidden md:mb-6 md:rounded-4xl md:border md:border-slate-400/20 md:bg-white/90 md:p-6 md:shadow-xl md:hover:border-slate-400/30 md:hover:shadow-2xl md:hover:shadow-slate-400/30 md:dark:border-gray-600/30 md:dark:bg-gray-900/90 md:dark:shadow-black/50 md:dark:hover:border-gray-500/40 md:dark:hover:shadow-black/60;
+        @apply mx-0 w-full p-0 shadow-none transition-all duration-300 empty:hidden md:rounded-4xl md:border md:border-slate-400/20 md:bg-white/90 md:p-6 md:shadow-xl md:hover:border-slate-400/30 md:hover:shadow-2xl md:hover:shadow-slate-400/30 md:dark:border-gray-600/30 md:dark:bg-gray-900/90 md:dark:shadow-black/50 md:dark:hover:border-gray-500/40 md:dark:hover:shadow-black/60;
 
         .cbi-title-section {
           @apply mb-6 leading-relaxed max-md:mx-2 max-md:mb-3;
@@ -337,7 +337,7 @@
     }
 
     footer {
-      @apply mt-auto flex flex-wrap items-center justify-between border-t border-slate-200/50 text-xs text-slate-500 max-md:min-h-13 dark:border-slate-700/30 dark:text-slate-400;
+      @apply mt-2 flex min-h-16 flex-wrap items-center justify-between text-xs text-slate-500 dark:text-slate-400;
 
       & a {
         @apply text-aurora-sky dark:text-aurora-teal-400;
@@ -420,19 +420,20 @@
         }
       }
 
-      &:has(.theme-option[data-theme="light"].active)::before {
-        @apply translate-x-0;
+      &:has(.theme-option[data-theme="device"].active) {
+        @apply before:translate-x-0;
       }
 
-      &:has(.theme-option[data-theme="dark"].active)::before {
-        @apply translate-x-[calc(100%+0.5rem)];
+      &:has(.theme-option[data-theme="light"].active) {
+        @apply before:translate-x-[calc(100%+0.5rem)];
       }
 
-      &:has(.theme-option[data-theme="device"].active)::before {
-        @apply translate-x-[calc(200%+1rem)];
+      &:has(.theme-option[data-theme="dark"].active) {
+        @apply before:translate-x-[calc(200%+1rem)];
       }
     }
   }
+
   @layer button {
     button,
     .btn,
@@ -483,6 +484,10 @@
 
     .cbi-input-text {
       @apply min-w-20 max-md:min-w-14;
+    }
+
+    #localtime {
+      @apply min-w-70;
     }
 
     input[type="radio"],
