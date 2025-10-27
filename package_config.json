@@ -32,7 +32,12 @@
       "luci-app-partexp",
       "luci-app-quickstart",
       "luci-app-adguardhome",
-      "luci-app-UUGameAcc"
+      "luci-app-UUGameAcc",
+      "luci-app-pptp-server",
+      "luci-app-ipsec-server",
+      "luci-app-openvpn-client",
+      "luci-app-openvpn-server",
+      "luci-app-ipsec-server"
     ],
     "paths": [
       "luci-app-oaf",
@@ -40,7 +45,12 @@
       "quickstart",
       "luci-app-quickstart",
       "luci-app-adguardhome",
-      "luci-app-UUGameAcc"
+      "luci-app-UUGameAcc",
+      "luci-app-pptp-server",
+      "luci-app-ipsec-server",
+      "luci-app-openvpn-client",
+      "luci-app-openvpn-server",
+      "luci-app-ipsec-server"
     ],
     "apk_black_list": ["luci-app-quickstart"]
   },
@@ -59,6 +69,6 @@
     "packages": []
   },
   "https://github.com/Tokisaki-Galaxy/luci-app-tailscale-community.git": {
-    "packages": [ "luci-app-tailscale-community" ]
+    "packages": [ "luci-app-tailscale" ]
   }
 }
