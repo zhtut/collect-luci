@@ -1314,9 +1314,14 @@
           @apply max-md:hidden;
         }
 
-        &:first-child:not(.table-titles):not(.cbi-section-table-titles),
-        &:first-child.cbi-section-table-titles + tr,
-        &:first-child.table-titles + tr {
+        &:first-child:not(
+            .table-titles,
+            .cbi-section-table-titles,
+            .cbi-section-table-descr
+          ),
+        &.table-titles + .tr,
+        &.cbi-section-table-titles + .tr,
+        &.cbi-section-table-descr + .tr {
           @apply max-md:rounded-t-2xl;
         }
 
