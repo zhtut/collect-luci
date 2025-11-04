@@ -1083,10 +1083,10 @@
                 }
 
                 & .cbi-value {
-                  @apply text-sm font-medium;
+                  @apply flex-col gap-3 text-sm font-medium max-md:text-xs;
 
                   & .cbi-value-title {
-                    @apply text-right text-slate-700 max-md:text-xs dark:text-slate-300;
+                    @apply flex-1 text-left text-slate-700 dark:text-slate-300;
                   }
 
                   & .cbi-value-field {
@@ -1474,49 +1474,36 @@
     }
 
     .cbi-value {
-      @apply py-1.5 max-md:py-1;
+      @apply flex flex-row flex-wrap gap-6 py-1.5 max-md:flex-col max-md:gap-1.5 max-md:py-1;
 
-      & + .cbi-value {
+      &.hidden {
+        @apply hidden;
+      }
+
+      & + & {
         @apply mt-3 max-md:mt-2;
       }
 
       & > .cbi-value-title {
-        @apply mb-1.5 inline-block;
+        @apply text-right font-medium max-md:w-auto max-md:text-left md:flex-[0_0_12rem];
       }
 
       & > .cbi-value-field {
-        @apply flex flex-col items-stretch gap-3;
-
+        @apply flex flex-1 flex-col gap-3;
         &:not(:has(.cbi-dynlist)) {
-          @apply flex-row flex-wrap items-center;
+          @apply flex-row flex-wrap;
         }
-
-        & > div {
-          @apply flex flex-wrap items-center gap-2;
-          & > label {
-            @apply inline-flex flex-col gap-1.5;
-          }
-        }
-
-        & > .cbi-dropdown {
-          @apply max-md:max-w-full max-md:whitespace-normal;
-        }
-
         &:has(> .cbi-dropdown[disabled]) {
           @apply cursor-not-allowed;
         }
-
         & .cbi-value-description {
-          @apply ml-3 inline-block leading-normal break-words text-slate-500 dark:text-slate-400;
-
-          & p {
-            @apply break-all;
-          }
+          @apply ml-3 break-words text-slate-500 dark:text-slate-400;
         }
+      }
 
-        & output {
-          @apply mr-3;
-        }
+      & > .cbi-section,
+      & > .cbi-tblsection {
+        @apply w-full;
       }
     }
 
