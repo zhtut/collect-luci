@@ -543,7 +543,7 @@
     }
 
     .cbi-dropdown {
-      @apply focus:border-aurora-sky focus:ring-aurora-sky/20 dark:focus:border-aurora-teal-400 dark:focus:ring-aurora-teal-400/30 inline-flex min-w-fit flex-shrink-0 items-center p-0 whitespace-nowrap shadow-sm transition-all duration-200 focus:ring-2 focus:outline-none;
+      @apply focus:border-aurora-sky focus:ring-aurora-sky/20 dark:focus:border-aurora-teal-400 dark:focus:ring-aurora-teal-400/30 inline-flex h-fit max-w-full min-w-fit flex-shrink-0 items-center p-0 whitespace-nowrap shadow-sm transition-all duration-200 focus:ring-2 focus:outline-none;
 
       &[disabled] {
         @apply pointer-events-none opacity-40 dark:opacity-30;
@@ -559,10 +559,10 @@
       }
 
       & > ul {
-        @apply m-0 flex flex-1 list-none flex-nowrap items-center gap-2 overflow-hidden max-md:flex-wrap max-md:gap-1;
+        @apply m-0 flex flex-1 list-none flex-nowrap items-center gap-0.5 overflow-hidden max-md:flex-wrap;
 
         & > li {
-          @apply m-0 hidden list-none items-center gap-2 overflow-hidden px-2.5 py-1.5;
+          @apply m-0 hidden list-none items-center gap-1 overflow-hidden px-2 py-1.5;
 
           &[display] {
             @apply !flex;
@@ -795,18 +795,10 @@
       @apply inline-flex items-center gap-1.5 overflow-visible rounded-full border border-black/8 bg-white px-1 py-1.5 text-sm font-medium text-slate-800 shadow-sm transition-all duration-200 hover:shadow-md max-md:gap-1 max-md:text-xs dark:border-white/12 dark:bg-slate-800 dark:text-slate-200 dark:shadow-black/25;
 
       .cbi-dropdown & {
-        @apply rounded-2xl;
+        @apply rounded-xl px-1 py-0.5;
 
         &[style*="--zone-color-rgb:238, 238, 238"] {
           @apply dark:!bg-slate-700/60;
-        }
-      }
-
-      & > .ifacebadge {
-        @apply rounded border-none bg-slate-100/80 px-0 py-0 dark:bg-slate-700/50;
-
-        & img {
-          @apply mr-2 w-4 max-md:mr-1.5;
         }
       }
     }
@@ -817,6 +809,14 @@
       .cbi-dropdown &,
       .cbi-tooltip & {
         @apply flex-nowrap;
+      }
+
+      .zonebadge > &,
+      .cbi-dropdown & {
+        @apply rounded-2xl px-1.5 py-0;
+        & img {
+          @apply mr-1 w-4;
+        }
       }
 
       & > img {
@@ -830,7 +830,7 @@
       }
 
       &.ifacebadge-active {
-        @apply border-aurora-sky font-semibold;
+        @apply border-aurora-sky dark:border-aurora-teal-400 font-semibold;
       }
 
       &.large {
