@@ -88,6 +88,9 @@
 			<div id="indicators" class="pull-right"></div>
 		</header>
 
+		<!-- Desktop menu overlay -->
+		<div class="desktop-menu-overlay"></div>
+
 		<!-- Mobile menu overlay -->
 		<div class="mobile-menu-overlay" id="mobile-menu-overlay">
 			<nav class="mobile-nav">
