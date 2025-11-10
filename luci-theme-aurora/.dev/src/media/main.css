@@ -1733,9 +1733,6 @@
   }
 
   @layer luci-app-openclash {
-    [data-page="admin-services-openclash-log"] {
-      @apply dark:bg-aurora-night-teal;
-    }
     [data-page="admin-services-openclash-config"] {
       .sub_div {
         img {
