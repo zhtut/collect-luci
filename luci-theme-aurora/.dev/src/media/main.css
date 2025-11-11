@@ -296,7 +296,11 @@
           }
 
           &[data-indicator="uci-changes"] {
-            @apply before:[mask:url('@assets/icons/setting.svg')_center/cover_no-repeat];
+            @apply relative before:[mask:url('@assets/icons/setting.svg')_center/cover_no-repeat];
+
+            &[data-count]:not([data-count="0"]) {
+              @apply after:absolute after:-top-0.5 after:-right-0.5 after:z-10 after:flex after:min-h-3 after:min-w-3 after:items-center after:justify-center after:rounded-full after:bg-red-500 after:px-0.5 after:text-[8px] after:leading-none after:font-bold after:text-white after:shadow-sm after:content-[attr(data-count)] dark:after:bg-red-600;
+            }
           }
         }
       }
