@@ -89,14 +89,11 @@
 				<div id="indicators" class="pull-right"></div>
 			</div>
 
-			<!-- Desktop menu container - now inside header -->
 			<div class="desktop-menu-container"></div>
 		</header>
 
-		<!-- Desktop menu overlay -->
 		<div class="desktop-menu-overlay"></div>
 
-		<!-- Mobile menu overlay -->
 		<div class="mobile-menu-overlay" id="mobile-menu-overlay">
 			<nav class="mobile-nav">
 				<div class="mobile-nav-header">
@@ -130,7 +127,6 @@
 					</div>
 				</div>
 				<ul class="mobile-nav-list" id="mobile-nav-list">
-					<!-- Mobile menu items will be rendered here -->
 				</ul>
 			</nav>
 		</div>

@@ -216,19 +216,19 @@ return baseclass.extend({
     if (level === 0) {
       const container = document.querySelector(".desktop-menu-container");
       const overlay = document.querySelector(".desktop-menu-overlay");
+      const header = document.querySelector("header");
 
-      if (container) container.innerHTML = "";
+      let showTimer = null;
+      let hideTimer = null;
 
       children.forEach((child) => {
         const submenu = ui.menu.getChildren(child);
         const hasSubmenu = submenu.length > 0;
-        const menuId = `menu-${child.name}`;
 
         const li = E(
           "li",
           {
             class: hasSubmenu ? "has-desktop-nav" : "",
-            "data-menu-id": menuId,
           },
           [
             E(
@@ -244,27 +244,26 @@ return baseclass.extend({
 
         ul.appendChild(li);
 
-        if (hasSubmenu && container) {
+        if (hasSubmenu) {
           const nav = E(
             "div",
             {
               class: "desktop-nav",
-              "data-menu-for": menuId,
             },
             [this.renderMainMenu(child, `${url}/${child.name}`, level + 1)],
           );
 
-          container.appendChild(nav);
+          li.appendChild(nav);
 
-          li.querySelector("a").addEventListener("click", (e) => {
-            e.preventDefault();
-            e.stopPropagation();
+          const menuLink = li.querySelector("a");
 
-            const isActive = nav.classList.contains("active");
+          li.addEventListener("mouseenter", () => {
+            if (hideTimer) {
+              clearTimeout(hideTimer);
+              hideTimer = null;
+            }
 
-            if (isActive) {
-              this.hideDesktopNav();
-            } else {
+            showTimer = setTimeout(() => {
               document
                 .querySelectorAll(".desktop-nav")
                 .forEach((n) => n.classList.remove("active"));
@@ -272,17 +271,67 @@ return baseclass.extend({
               document
                 .querySelectorAll("#topmenu a")
                 .forEach((a) => a.classList.remove("menu-active"));
-              li.querySelector("a").classList.add("menu-active");
 
-              nav.classList.add("active");
-              document.querySelector("header").classList.add("has-desktop-nav");
-              overlay.classList.add("active");
+              menuLink.classList.add("menu-active");
+              header.classList.add("has-desktop-nav");
+
+              requestAnimationFrame(() => {
+                const navHeight = nav.scrollHeight;
+                const headerHeight =
+                  header.querySelector(".header-content")?.offsetHeight || 56;
+                const totalHeight = headerHeight + navHeight;
+
+                if (container) {
+                  container.style.height = `${totalHeight}px`;
+                }
+
+                requestAnimationFrame(() => {
+                  nav.classList.add("active");
+                  overlay.classList.add("active");
+
+                  if (container) {
+                    container.classList.add("active");
+                  }
+                });
+              });
+            }, 150);
+          });
+
+          li.addEventListener("mouseleave", () => {
+            if (showTimer) {
+              clearTimeout(showTimer);
+              showTimer = null;
             }
+          });
+
+          menuLink.addEventListener("click", (e) => {
+            e.preventDefault();
           });
         }
       });
 
-      if (overlay) {
+      if (header && overlay) {
+        const hideMenu = () => {
+          if (showTimer) {
+            clearTimeout(showTimer);
+            showTimer = null;
+          }
+
+          hideTimer = setTimeout(() => {
+            this.hideDesktopNav();
+          }, 200);
+        };
+
+        header.addEventListener("mouseleave", hideMenu);
+        overlay.addEventListener("mouseenter", hideMenu);
+
+        header.addEventListener("mouseenter", () => {
+          if (hideTimer) {
+            clearTimeout(hideTimer);
+            hideTimer = null;
+          }
+        });
+
         overlay.addEventListener("click", () => this.hideDesktopNav());
       }
     } else {
@@ -304,6 +353,13 @@ return baseclass.extend({
       .querySelectorAll(".desktop-nav")
       .forEach((nav) => nav.classList.remove("active"));
     document.querySelector("header")?.classList.remove("has-desktop-nav");
+
+    const container = document.querySelector(".desktop-menu-container");
+    if (container) {
+      container.classList.remove("active");
+      container.style.height = "";
+    }
+
     document.querySelector(".desktop-menu-overlay")?.classList.remove("active");
     document
       .querySelectorAll("#topmenu a")
