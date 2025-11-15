@@ -5,17 +5,17 @@
 ## 简介
 
 **luci-theme-aurora** 是一款专为现代浏览器设计的 OpenWrt 主题。
-主题的灵感源自 **Aurora（极光）** —— 在挪威北部特鲁姆瑟，白天映入眼帘的是洁白纯净的雪山，夜幕降临则是天际舞动的极光。
+主题的设计灵感源自 **Aurora（极光）** —— 在挪威北部特罗姆瑟，白天映入眼帘的是洁白纯净的雪山，夜幕降临则是天际舞动的极光。
 同样在主题中，我希望白天模式呈现雪山般纯净，暗夜模式展现极光般迷人。
 
 > ⚠️ **提示**  
-> 主题处于 Beta 阶段，版本更新很快，打包发布的版本可能不是最新的。  
-> 如有能力，建议自行编译源码获取最新版本。  
-> 如果遇到问题，欢迎提交 Issue 反馈 Bug，一起让主题更完善 🙏💖。
+> 主题处于 Beta 阶段，版本更新频繁，发布的版本可能不是最新的。  
+> 有编译环境可自行编译，无编译环境可 fork 仓库使用 [GitHub Actions 工作流](https://github.com/eamonxg/luci-theme-aurora/actions/workflows/build-and-release-aurora.yml) 自动生成主题安装包。  
+> 遇到 Bug 欢迎提交 Issue 🙏💖。
 
 ## 兼容性
 
-- **OpenWrt**：由于主题使用 ucode 模板，需要 **OpenWrt 22.03** 或更高版本。
+- **OpenWrt**：主题使用 ucode 模板以及 luci JavaScript APIs，需要 **OpenWrt 23.05.0** 或更高版本。
 - **浏览器**：主题基于 **TailwindCSS v4** 开发，请使用以下现代浏览器：
   - **Chrome/Edge 111** _(2023 年 3 月发布)_
   - **Safari 16.4** _(2023 年 3 月发布)_
@@ -40,3 +40,14 @@ Aurora 选择 Vite 作为构建工具，
 在开发阶段，可以自由选择并使用 CSS 任何工具链；  
 在生产阶段，可以选择多种手段优化打包资源；  
 最重要的是，通过本地代理服务器，可以做到样式修改实时预览！
+
+## 版权与致谢
+
+本项目生产目录结构基于 OpenWrt 官方主题  
+[luci-theme-bootstrap](https://github.com/openwrt/luci/tree/master/themes/luci-theme-bootstrap)。
+
+视觉风格及部分实现借鉴自  
+[Apple](https://www.apple.com/) 和 [Vercel](https://vercel.com/docs/dashboard-features)。
+
+项目使用现代前端技术栈开发，包括  
+[Vite](https://vitejs.dev/) 和 [Tailwind CSS](https://tailwindcss.com/)。
