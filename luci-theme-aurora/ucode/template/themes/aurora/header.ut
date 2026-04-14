@@ -104,6 +104,16 @@
 		<link rel="stylesheet" href="{{ media }}/main.css">
 		<link rel="icon" href="{{ media }}/images/{{ logo_png }}?v={{ icon_cache_version }}" sizes="32x32">
 		<link rel="icon" href="{{ media }}/images/{{ logo_svg }}?v={{ icon_cache_version }}" sizes="any">
+		<link rel="icon" type="image/png" sizes="16x16" href="{{ media }}/images/favicon-16x16.png">
+		<link rel="icon" type="image/png" sizes="32x32" href="{{ media }}/images/favicon-32x32.png">
+		<link rel="shortcut icon" href="{{ media }}/images/favicon.ico">
+		<link rel="apple-touch-icon" sizes="180x180" href="{{ media }}/images/pwa/apple-touch-icon.png">
+		<link rel="manifest" href="{{ media }}/images/pwa/app.webmanifest">
+		<meta name="application-name" content="LuCI Aurora">
+		<meta name="apple-mobile-web-app-capable" content="yes">
+		<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+		<meta name="apple-mobile-web-app-title" content="{{ striptags(boardinfo.hostname ?? 'Aurora') }}">
+		<meta name="mobile-web-app-capable" content="yes">
 		{% if (node?.css): %}
 		<link rel="stylesheet" href="{{ resource }}/{{ node.css }}">
 		{% endif %}
