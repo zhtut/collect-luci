@@ -28,18 +28,16 @@ pnpm install
 ### 2. Configure Environment
 
 ```bash
-# Copy environment template
-cp .env.example .env
-
-# Edit .env and set your OpenWrt device address
-# VITE_OPENWRT_HOST=http://192.168.1.1
+# One-shot wizard: asks for the router IP, generates/installs an SSH key
+# (one router-password prompt), and writes .env
+pnpm setup
 ```
 
-**Environment Variables:**
+If the router is at the default `192.168.1.1` and passwordless SSH already works, no `.env` is needed at all — every value below has a working default.
 
-- `VITE_OPENWRT_HOST` - Your OpenWrt LuCI web interface URL (required)
-- `VITE_OPENWRT_SSH_HOST` - SSH target for `.ut` template sync, e.g. `root@192.168.1.1` (optional)
-- `VITE_OPENWRT_SSH_KEY` - Path to SSH private key (optional, falls back to ssh-agent or `~/.ssh/config`)
+**Environment Variables** (all optional):
+
+- `VITE_OPENWRT_HOST` - bare router address, e.g. `192.168.1.1` (default; `host:port` and full-URL forms also accepted). The web proxy target and the `.ut`-sync SSH target (`root@<hostname>`) both derive from it; anything fancier (a dedicated key, a jump host, a non-standard ssh port) belongs in a `Host` block in `~/.ssh/config`, which ssh picks up automatically.
 - `VITE_DEV_HOST` - Development server host (code default: `127.0.0.1`, `.env.example` sets `0.0.0.0` for LAN access)
 - `VITE_DEV_PORT` - Development server port (default: `5173`)
 
@@ -94,7 +92,7 @@ Third-party compatibility patches are **not** bundled into `main.css` — they a
 
 **Adding new styles:**
 
-- New UI component → create `components/_<name>.css` and add an `@import` line to `main.css`. Each file is its own organizational unit — no `@layer` wrappers needed (any that remain are stripped by PostCSS).
+- New UI component → create `components/_<name>.css` and add an `@import` line to `main.css`. Each file is its own organizational unit — don't add `@layer` wrappers: theme partials stay unlayered, so they outrank Tailwind's layered base/utilities regardless of specificity.
 - Compatibility fix for a third-party LuCI app/page → add a new file under `media/patches/` (see below).
 
 All rules use `@apply` with Tailwind utilities and CSS Nesting — no raw CSS properties.
@@ -108,11 +106,13 @@ Some third-party LuCI apps ship markup that doesn't adapt to the theme and needs
 1. **One file per page, named by `data-page`.** Each patch lives at `media/patches/<page>.css`, where `<page>` is the value of `<body data-page="…">` for the target page — i.e. the request path segments joined by `-` (e.g. `admin-services-openclash-config`). `header.ut` computes the same string at render time from `ctx.request_path`, falling back to `ctx.path` when `request_path` is empty (`join('-', length(ctx.request_path) ? ctx.request_path : ctx.path)`) so default landings reached without an explicit path still resolve their patch.
 2. **Build splits, not bundles.** `vite.config.ts` adds every `media/patches/*.css` as its own Rollup entry, so each compiles to `htdocs/luci-static/aurora/patches/<page>.css`. They are no longer part of `main.css`.
 3. **`@reference`, not `@import`.** Every patch file starts with `@reference "../main.css";`. This loads the theme context (tokens, custom utilities like `bg-surface`, the `dark:` variant) so `@apply` resolves — **without** re-emitting `main.css` into the patch output. Using `@import` here would inline all of `main.css` into every patch (hundreds of KB); `@reference` keeps each patch to just its own rules.
-4. **`header.ut` links exactly one patch.** A static allow-list `PATCH_PAGES` in `header.ut` lists which pages have a patch file. When the current page is in the list, header emits a single `<link>` to its patch file, right after `main.css` (so patches can override base styles). Pages not in the list get nothing — no extra request, no 404. A static list is used (rather than probing the filesystem) to avoid a hard `fs` dependency in the template and to avoid 404s on the ~95% of pages with no patch.
+4. **`header.ut` discovers patches at render time.** On each (non-login) page render, `header.ut` lists `/www/luci-static/aurora/patches/` with ucode's `fs.lsdir()` (a readdir of a dozen entries — microseconds, dwarfed by the template's existing `ubus` call) and matches the installed `*.css` filenames against the **cumulative path-segment prefixes** of the request: a patch matches its exact page and any subpage, but only on real segment boundaries — `admin-services-wol.css` covers `admin/services/wol/plus`, yet never a sibling app whose own segment merely starts the same way (`admin/services/wol-plus`). Every matching patch is linked right after `main.css`, in lexical order — so a general patch loads before a more specific one and the specific one cascades on top. Pages with no match get nothing — no extra request, no 404. If the directory is missing or unreadable, the list is empty and the page renders unpatched.
+5. **The patches directory is a drop-in extension point.** Because discovery is at render time, patches don't have to ship with the theme: **any package may install a `<page-prefix>.css` into `/www/luci-static/aurora/patches/`** and the theme will load it on matching pages. Install/uninstall lifecycle is automatic — the file appears and disappears with the package, no registration or allow-list rebuild. (Patches shipped this way are plain CSS served as-is; the theme's own patches additionally go through the Tailwind build below.)
+6. **Dynamically generated pages are covered by their fixed prefix.** Some apps mint a page per entity — e.g. QModem's SMS conversations render as `admin-modem-qmodem-sms-conversation-<contact>`. Name the patch after the fixed prefix (`admin-modem-qmodem-sms-conversation.css`) and the prefix match loads it for every conversation page, regardless of the contact name. No wildcard syntax is needed (and `*` in a filename is not supported).
 
 **Adding a patch:**
 
-1. Open the target page in the browser and read `document.body.dataset.page` — that exact string is your filename.
+1. Open the target page in the browser and read `document.body.dataset.page` — that exact string is your filename (for a family of dynamic per-entity pages, use their fixed prefix instead — see point 5 above).
 2. Create `media/patches/<that-string>.css`:
    ```css
    /* PATCH: <page> (luci-app-foo) */
@@ -122,27 +122,55 @@ Some third-party LuCI apps ship markup that doesn't adapt to the theme and needs
      /* narrow, selector-scoped overrides using @apply + CSS Nesting */
    }
    ```
-3. Run `pnpm build` (or just `pnpm gen:patch-pages`). The `PATCH_PAGES` allow-list in `header.ut` is **auto-generated** from the `patches/` directory by `scripts/gen-patch-pages.js` — no manual editing. It rewrites the region between the `//#patch-pages-start` / `//#patch-pages-end` markers; don't hand-edit inside them.
+3. Run `pnpm build`. There is no allow-list to regenerate — the loader discovers whatever `.css` files are installed under `patches/` at render time.
 4. Verify `htdocs/luci-static/aurora/patches/<page>.css` is small (just your rules, not a copy of `main.css`).
 
-> Removing a patch is symmetric: delete the file and rebuild — it drops out of `PATCH_PAGES` automatically.
+> Removing a patch is symmetric: delete the file and rebuild — the loader stops linking it because it no longer exists.
 
-> **Naming notes:** match the page exactly — granularity is per page, not per app. An app with several pages (e.g. openclash `…-config` and `…-settings`) gets one file per page. The filename has no `_` prefix (unlike the `_`-prefixed partials, which are `@import`-only fragments); patch files are real build entries that ship to `htdocs/`.
+**Shipping a patch with a third-party app** (no theme release needed): build or hand-write a plain CSS file named after your page's `data-page` prefix and install it from your package's Makefile:
+
+```makefile
+define Package/luci-app-foo/install
+	...
+	$(INSTALL_DIR) $(1)/www/luci-static/aurora/patches
+	$(INSTALL_DATA) ./htdocs/aurora-patch.css \
+		$(1)/www/luci-static/aurora/patches/admin-services-foo.css
+endef
+```
+
+The theme loads it automatically on `admin-services-foo` and all its subpages whenever both packages are installed. Note app-shipped patches bypass the theme's Tailwind build — write plain CSS (you can still target the theme's CSS custom properties, e.g. `var(--surface)`), and scope every rule under your own `[data-page^="…"]` selector.
+
+**Naming.** The filename is the page's `data-page` string; matching by prefix means broader targets also just work:
+
+| You want to patch… | File to create | Then it loads on |
+| --- | --- | --- |
+| One specific page, `admin/services/foo/general` | `admin-services-foo-general.css` | that page (and any subpage under it) |
+| A whole app, all pages under `admin/services/foo/…` | `admin-services-foo.css` | `foo`, `foo/general`, `foo/rules`, … |
+| Dynamic per-entity pages, e.g. QModem SMS `…/sms/conversation/<contact>` | `admin-modem-qmodem-sms-conversation.css` (the fixed prefix — no wildcard needed) | every conversation page, whatever the contact |
+
+Two rules of thumb that follow from prefix matching:
+
+- **A patch applies to its page and all subpages by default.** `admin-services-foo.css` loads on every page under `admin/services/foo/…`. When you need finer targeting, narrow it in either of two ways: scope individual rules inside the file (`[data-page="admin-services-foo-general"] { … }` only affects that one page), or ship an additional, longer-named file (`admin-services-foo-rules.css`) for page-specific rules — on a page matching both, **both load**, shorter name first, so the more specific file wins the cascade.
+- **Matching respects path-segment boundaries**, so a prefix never leaks onto a lookalike sibling: `admin-services-wol.css` covers `admin/services/wol/plus` but not a different app at `admin/services/wol-plus`. The one unavoidable collision is two paths joining to the same `data-page` string (`wol/plus` vs `wol-plus`) — such a patch loads on both pages. If that matters, key rules to your app's own class names/ids so an accidental load matches nothing.
+
+> Unlike the `_`-prefixed partials (which are `@import`-only fragments), patch filenames have no `_` prefix — each is a real build entry that ships to `htdocs/`.
 
 ### Design Tokens
 
-`src/media/_tokens.css` is **generated** — its header says "DO NOT EDIT". The source of truth is `.dev/tokens/`:
+`src/media/_tokens.css` is **generated** — its header says "DO NOT EDIT". The source of truth is the standalone [`@eamonxg/aurora-tokens`](https://github.com/eamonxg/aurora-tokens) npm package, consumed here as a devDependency:
 
 - **`defaults.js`** — the 10 editable input colors (`bg`, `surface`, `text`, `brand`, `on_brand`, `link`, `info`, `warning`, `success`, `danger`) for light and dark mode, as OKLCH strings.
 - **`spec.js`** — `DERIVATIONS` (how every other token — `text_muted`, `surface_sunken`, `hairline`, `brand_hover`, `brand_subtle`, `focus_ring`, `progress_start`/`progress_end`, `*_surface`, `scrim`, `mega_menu_bg`, …) is computed from the inputs via `mix`/`shade`/`set`/`alpha`/`const` operators, and `FIXED` (mode-specific literals such as shadows that bypass derivation).
 - **`engine.js`** — the OKLCH/OKLAB color math behind those operators, via [colorjs.io](https://colorjs.io/).
-- **`resolve.js`** — `resolveMode(mode)` walks `DERIVATIONS` and returns a flat `{token: oklchString}` map with no `color-mix()`/`var()` left in it.
+- **`resolve.js`** — `resolveMode(mode)` walks `DERIVATIONS` and returns a flat `{token: oklchString}` map with no `color-mix()`/`var()` left in it. `.dev/scripts/gen-tokens.js` imports `resolveMode`/`FIXED` straight from the package root.
 
 **Changing a color:**
 
-1. Edit `tokens/defaults.js` (base input colors) and/or `tokens/spec.js` (derivation rules, fixed literals).
+1. Edit `spec.js`/`defaults.js` in the [`aurora-tokens`](https://github.com/eamonxg/aurora-tokens) repo (derivation rules, fixed literals, base input colors), tag a release so CI publishes the package, then bump the `@eamonxg/aurora-tokens` devDependency version here and run `npm install`. For unreleased iteration against a local checkout, run `npm link ../../aurora-tokens` from `.dev` instead of bumping/publishing.
 2. Run `pnpm gen:tokens` (also runs automatically as part of `pnpm build`) to rewrite `src/media/_tokens.css` — it emits `:root` (light) and `[data-darkmode="true"]` (dark) blocks plus the `@theme inline` mapping, in that order.
 3. Run `pnpm test` to check the color-math operators and derived-token invariants (`tests/engine.test.js`, `tests/resolve.test.js`, `tests/surfaces.test.js`) — e.g. hue families, lightness ordering between `bg`/`surface_sunken`/`surface`, and translucency of menu backgrounds.
+
+**Runtime overrides from UCI:** `header.ut` reads `uci get_all aurora.theme` on each render and re-emits stored tokens as CSS custom-property overrides in an inline `<style>` after `main.css`. Keys are namespaced by prefix — `light_*` and `struct_*` land in `:root`, `dark_*` in `[data-darkmode="true"]` — with the prefix stripped and `_` mapped to `-` (e.g. `light_surface_sunken` → `--surface-sunken`). The template flattens all keys in a single pass into two pre-joined declaration strings (rather than per-key template loops), which halves the iteration work and keeps the emitted `<style>` compact. This is the hook `luci-app-aurora-config` writes through.
 
 ### LuCI JavaScript API
 
@@ -154,46 +182,23 @@ For LuCI-specific JavaScript development, refer to the official API documentatio
 
 - **CSS changes**: Trigger full page reload via custom HMR handler
 - **JS changes**: Trigger full page reload via custom HMR handler
-- **Template changes** (`.ut` files): Auto-synced to router via SCP and trigger full page reload (requires SSH setup, see below)
+- **Template changes** (`.ut` files): Auto-synced to router over SSH and trigger full page reload (one-time `pnpm setup` required, see below)
 
 ### Template (`.ut`) Live Sync
 
-The `.ut` template files are rendered server-side on the OpenWrt device. To see template changes during development, the dev server can automatically sync modified `.ut` files to the router via SCP.
+The `.ut` template files are rendered server-side on the OpenWrt device, so unlike CSS/JS they can't be served locally — the dev server pushes them to the router instead. Run `pnpm setup` once to configure passwordless SSH; after that it's fully automatic:
 
-**1. Set up SSH key authentication to your router:**
+- **On startup**, the whole template directory is pushed (as one tarball over ssh stdin — Dropbear has no SFTP server for scp), so edits made while the dev server was down never leave the router stale.
+- **On save**, changes are debounced and the directory is pushed again, then the browser reloads.
+- **On page load**, requests to `/cgi-bin` wait for any in-flight push, so a proxied render never uses a stale template.
 
-```bash
-# Generate a key if you don't have one
-ssh-keygen -t ed25519
-
-# Copy your public key to the router (OpenWrt uses Dropbear, not OpenSSH)
-cat ~/.ssh/id_ed25519.pub | ssh root@192.168.1.1 "cat >> /etc/dropbear/authorized_keys"
-
-# Verify passwordless login works
-ssh root@192.168.1.1 "echo ok"
-```
-
-**2. Add SSH config to `.env`:**
-
-```bash
-# SSH target for .ut file sync (user@host)
-VITE_OPENWRT_SSH_HOST=root@192.168.1.1
-
-# Optional: path to SSH private key (falls back to ssh-agent or ~/.ssh/config)
-# VITE_OPENWRT_SSH_KEY=~/.ssh/id_ed25519
-```
-
-**3. Start `pnpm dev` and edit any `.ut` file** — the dev server will automatically sync it to the router and reload the browser.
-
-**Troubleshooting:**
-
-The dev server checks SSH connectivity on startup and prints actionable errors:
+**Troubleshooting** — sync errors are printed with the fix:
 
 - **Host key mismatch** (device was reflashed): Run `ssh-keygen -R <device-ip>`, then restart the dev server
-- **Authentication failed** (public key not on device): Copy your key with the command above
+- **Authentication failed** (public key not on device): Run `pnpm setup`
 - **Connection refused/timed out**: Check that the device is online and SSH is enabled
 
-If `VITE_OPENWRT_SSH_HOST` is not set, template sync is simply disabled and other dev features work normally.
+A failed sync is retried on the next `.ut` change; CSS/JS dev features work normally without SSH.
 
 ## Building for Production
 
@@ -221,11 +226,10 @@ htdocs/luci-static/
 
 **Build Process:**
 
-1. `pnpm gen:tokens` regenerates `src/media/_tokens.css` from `tokens/` (see [Design Tokens](#design-tokens))
-2. Vite builds the CSS entry points (`src/media/main.css` and `src/media/login.css`)
-3. Custom PostCSS plugin removes `@layer` at-rules for OpenWrt compatibility
-4. Custom Vite plugin (`luci-js-compress`) minifies JS files via Terser
-5. Static assets copied from `.dev/public/aurora/`
+1. `pnpm gen:tokens` regenerates `src/media/_tokens.css` from `@eamonxg/aurora-tokens` (see [Design Tokens](#design-tokens))
+2. Vite builds the CSS entry points (`src/media/main.css` and `src/media/login.css`), keeping Tailwind's native `@layer` structure
+3. Custom Vite plugin (`luci-js-compress`) minifies JS files via Terser
+4. Static assets copied from `.dev/public/aurora/`
 
 ## Package Compilation
 
@@ -268,13 +272,13 @@ luci-theme-aurora/
 │   │   └── images/                 # Theme images + PWA icons
 │   ├── scripts/                    # Build scripts
 │   │   ├── clean.js                # Build cleanup utility
-│   │   └── gen-tokens.js           # Regenerates src/media/_tokens.css from tokens/
+│   │   └── gen-tokens.js           # Regenerates src/media/_tokens.css from @eamonxg/aurora-tokens
 │   ├── src/                        # Source code
 │   │   ├── assets/icons/           # SVG icons
 │   │   ├── media/                  # CSS source (Tailwind CSS v4)
 │   │   │   ├── main.css            # Admin UI entry point (import manifest)
 │   │   │   ├── login.css           # Login page entry point
-│   │   │   ├── _tokens.css         # OKLCH theme tokens -- GENERATED, see tokens/
+│   │   │   ├── _tokens.css         # OKLCH theme tokens -- GENERATED, see @eamonxg/aurora-tokens
 │   │   │   ├── _base.css           # Document foundation (html/body viewport bg)
 │   │   │   ├── _elements.css       # Base element styles (headings, links, …)
 │   │   │   ├── _layout.css         # Page layout/structure
@@ -283,11 +287,6 @@ luci-theme-aurora/
 │   │   │   └── patches/            # Per-page third-party patches (on-demand, one file per data-page)
 │   │   └── resource/               # JavaScript resources
 │   │       └── menu-aurora.js      # Menu logic
-│   ├── tokens/                     # Design token source (-> src/media/_tokens.css)
-│   │   ├── defaults.js             # 10 editable input colors (light/dark)
-│   │   ├── spec.js                 # Derivation rules (DERIVATIONS) + fixed literals
-│   │   ├── engine.js               # OKLCH/OKLAB color math (mix/shade/set/alpha)
-│   │   └── resolve.js              # Resolves spec into a flat token map
 │   ├── tests/                      # All test suites (pnpm test)
 │   │   ├── engine.test.js          # Color-math operators
 │   │   ├── resolve.test.js         # Resolved token invariants
@@ -332,7 +331,7 @@ luci-theme-aurora/
 - **[Vite](https://vitejs.dev/)** - Build tool and development server
 - **[pnpm](https://pnpm.io/)** - Fast, disk space efficient package manager
 - **[lightningcss](https://lightningcss.dev/)** - CSS minifier
-- **[colorjs.io](https://colorjs.io/)** - OKLCH/OKLAB color math for design token generation (`.dev/tokens/`)
+- **[colorjs.io](https://colorjs.io/)** - OKLCH/OKLAB color math for design token generation (used by [`@eamonxg/aurora-tokens`](https://github.com/eamonxg/aurora-tokens))
 - **[Terser](https://terser.org/)** - JavaScript minifier
 - **[Prettier](https://prettier.io/)** - Code formatter
 - **[prettier-plugin-tailwindcss](https://github.com/tailwindlabs/prettier-plugin-tailwindcss)** - Tailwind class sorting
