@@ -11,22 +11,26 @@ if [ "$ON_OFF" = off ]; then
 	exit 0
 fi
 
-last_connected=
+internet_led_disconnected
+last_connected=0
+failed_probes=0
 while true; do
-	if qmodem_connectivity_probe 3; then
+	if qmodem_connectivity_probe 1; then
 		connected=1
+		failed_probes=0
 	else
-		connected=0
-	fi
-	if [ "$connected" != "$last_connected" ]; then
-		if [ "$connected" = 1 ]; then
-			led_turn "$LED_INTERNET_BLUE" 1
-			led_turn "$LED_INTERNET_RED" 0
+		failed_probes=$((failed_probes + 1))
+		if [ "$last_connected" = 1 ] && [ "$failed_probes" -lt 3 ]; then
+			connected=1
 		else
-			led_turn "$LED_INTERNET_BLUE" 0
-			led_turn "$LED_INTERNET_RED" 1
+			connected=0
 		fi
-		last_connected="$connected"
 	fi
+	if [ "$connected" = 1 ]; then
+		internet_led_connected
+	else
+		internet_led_disconnected
+	fi
+	last_connected="$connected"
 	sleep 5
 done
