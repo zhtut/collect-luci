@@ -4,32 +4,14 @@
 
 ## How to build
 
-- Install `libfuse` development package.
-
-  - ubuntu/debian:
-    ```shell
-    sudo apt update
-    sudo apt install libfuse-dev
-    ```
-
-  - redhat:
-    ```shell
-    sudo yum install fuse-devel
-    ```
-
-  - arch:
-    ```shell
-    sudo pacman -S fuse2
-    ```
-
 - Enter in your openwrt dir
 
 - Openwrt official SnapShots
 
-  *1. requires golang 1.24.x or latest version (Fix build for older branches of OpenWrt.)*
+  *1. requires golang 1.25.x or latest version (Fix build for older branches of OpenWrt.)*
   ```shell
   rm -rf feeds/packages/lang/golang
-  git clone https://github.com/sbwml/packages_lang_golang -b 24.x feeds/packages/lang/golang
+  git clone https://github.com/sbwml/packages_lang_golang -b 26.x feeds/packages/lang/golang
   ```
 
   *2. get luci-app-openlist code & building*
