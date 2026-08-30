@@ -3,10 +3,6 @@
     "packages": ["luci-app-store"],
     "apk_black_list": ["luci-app-store"]
   },
-  "https://github.com/VIKINGYFY/packages.git": {
-    "packages": ["luci-app-wolplus"],
-    "paths": ["luci-app-wolplus"]
-  },
   "https://github.com/lwb1978/openwrt-gecoosac.git": {
     "packages": ["luci-app-gecoosac"]
   },
@@ -31,8 +27,5 @@
       "luci-app-adguardhome"
     ],
     "apk_black_list": ["luci-app-quickstart"]
-  },
-  "https://github.com/eamonxg/luci-theme-aurora.git":{
-    "packages": [ "luci-theme-aurora" ]
   }
 }
