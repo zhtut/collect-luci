@@ -3,7 +3,7 @@
     "packages": ["luci-app-store"],
     "apk_black_list": ["luci-app-store"]
   },
-  "https://github.com/lwb1978/openwrt-gecoosac.git": {
+  "https://github.com/zhtut/openwrt-gecoosac.git": {
     "packages": ["luci-app-gecoosac"]
   },
   "https://github.com/gdy666/luci-app-lucky.git": {
