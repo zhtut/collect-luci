@@ -12,6 +12,9 @@
   "https://github.com/EasyTier/luci-app-easytier.git": {
     "packages": ["luci-app-easytier"]
   },
+  "https://github.com/zhtut/luci-app-kmod-helper.git": {
+    "packages": ["luci-app-kmod-helper"]
+  },
   "https://github.com/kenzok8/small-package.git": {
     "packages": [
       "luci-app-oaf",
