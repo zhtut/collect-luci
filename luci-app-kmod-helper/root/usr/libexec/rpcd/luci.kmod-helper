@@ -1,0 +1,353 @@
+#!/bin/sh
+# rpcd backend for luci-app-kmod-helper
+# Protocol:
+#   list -> output method signature JSON
+#   call <method> -> read JSON args from stdin, output result JSON
+
+. /usr/share/libubox/jshn.sh
+
+CONF="kmod_helper"
+SECTION="main"
+
+fetch_url() {
+	local url="$1" timeout="${2:-15}"
+	if command -v uclient-fetch >/dev/null 2>&1; then
+		uclient-fetch -q -O - -T "$timeout" "$url" 2>/dev/null
+	elif command -v wget >/dev/null 2>&1; then
+		wget -q -O - -T "$timeout" "$url" 2>/dev/null
+	fi
+}
+
+get_mirror() {
+	local use_custom custom mirror
+	use_custom=$(uci -q get $CONF.$SECTION.use_custom)
+	custom=$(uci -q get $CONF.$SECTION.custom_mirror)
+	mirror=$(uci -q get $CONF.$SECTION.mirror)
+	if [ "$use_custom" = "1" ] && [ -n "$custom" ]; then
+		echo "$custom"
+	else
+		echo "${mirror:-https://mirrors.pku.edu.cn/immortalwrt/}"
+	fi
+}
+
+get_pkg_manager() {
+	if command -v opkg >/dev/null 2>&1; then
+		echo "opkg"
+	elif command -v apk >/dev/null 2>&1; then
+		echo "apk"
+	else
+		echo "unknown"
+	fi
+}
+
+get_vermagic() {
+	local vm
+	if [ "$(get_pkg_manager)" = "opkg" ]; then
+		vm=$(opkg status kernel 2>/dev/null | awk '/^Version: /{print $2; exit}')
+	fi
+	if [ -z "$vm" ]; then
+		vm=$(ls /lib/modules/ 2>/dev/null | head -n1)
+	fi
+	echo "$vm"
+}
+
+case "$1" in
+list)
+	cat <<'METHODS'
+{
+	"get_device_info": {},
+	"get_config": {},
+	"set_mirror": { "mirror": 3, "custom_mirror": 3, "use_custom": 3 },
+	"list_kernel_dirs": { "version": 3, "target": 3, "subtarget": 3, "mirror": 3 },
+	"search_kmods": { "base_url": 3, "keyword": 3 },
+	"get_installed_kmods": {},
+	"install_kmod": { "package": 3, "url": 3, "force": 3 },
+	"remove_kmod": { "package": 3 },
+	"list_loaded_modules": {},
+	"get_dmesg": { "lines": 6 },
+	"get_modinfo": { "module": 3 },
+	"test_mirror": { "mirror": 3 }
+}
+METHODS
+	;;
+call)
+	read -r input 2>/dev/null
+	json_load "$input" 2>/dev/null
+	case "$2" in
+	get_device_info)
+		local board release target subtarget kver vm pmgr arch model
+		model=$(cat /tmp/sysinfo/model 2>/dev/null || cat /proc/device-tree/model 2>/dev/null | tr -d '\0')
+		board=$(cat /etc/board.json 2>/dev/null | jsonfilter -e '@.model.name' 2>/dev/null)
+		[ -z "$board" ] && board="$model"
+		release=$(cat /etc/openwrt_release 2>/dev/null)
+		target=$(echo "$release" | jsonfilter -e 0 2>/dev/null)
+		target=$(. /etc/openwrt_release 2>/dev/null; echo "$DISTRIB_TARGET")
+		subtarget="${target#*/}"
+		target="${target%%/*}"
+		kver=$(uname -r)
+		vm=$(get_vermagic)
+		pmgr=$(get_pkg_manager)
+		arch=$(. /etc/openwrt_release 2>/dev/null; echo "$DISTRIB_ARCH")
+		local distrib_release
+		distrib_release=$(. /etc/openwrt_release 2>/dev/null; echo "$DISTRIB_RELEASE")
+		json_init
+		json_add_string "model" "${board:-$model}"
+		json_add_string "release" "$distrib_release"
+		json_add_string "target" "$target"
+		json_add_string "subtarget" "$subtarget"
+		json_add_string "kernel" "$kver"
+		json_add_string "vermagic" "$vm"
+		json_add_string "pkg_manager" "$pmgr"
+		json_add_string "arch" "$arch"
+		json_add_string "mirror" "$(get_mirror)"
+		json_dump
+		;;
+	get_config)
+		json_init
+		json_add_string "mirror" "$(uci -q get $CONF.$SECTION.mirror)"
+		json_add_string "custom_mirror" "$(uci -q get $CONF.$SECTION.custom_mirror)"
+		json_add_string "use_custom" "$(uci -q get $CONF.$SECTION.use_custom)"
+		json_add_string "effective_mirror" "$(get_mirror)"
+		json_dump
+		;;
+	set_mirror)
+		local mirror custom use_custom
+		json_get_var mirror mirror
+		json_get_var custom custom_mirror
+		json_get_var use_custom use_custom
+		[ -n "$mirror" ] && uci set $CONF.$SECTION.mirror="$mirror"
+		uci set $CONF.$SECTION.custom_mirror="$custom"
+		uci set $CONF.$SECTION.use_custom="${use_custom:-0}"
+		uci commit $CONF
+		json_init
+		json_add_boolean "success" 1
+		json_add_string "effective_mirror" "$(get_mirror)"
+		json_dump
+		;;
+	test_mirror)
+		local mirror body code
+		json_get_var mirror mirror
+		[ -z "$mirror" ] && mirror="$(get_mirror)"
+		mirror="${mirror%/}/"
+		body=$(fetch_url "$mirror" 10)
+		json_init
+		if [ -n "$body" ]; then
+			json_add_boolean "success" 1
+			json_add_string "message" "OK"
+		else
+			json_add_boolean "success" 0
+			json_add_string "message" "Unreachable"
+		fi
+		json_dump
+		;;
+	list_kernel_dirs)
+		local version target subtarget mirror base_url html
+		json_get_var version version
+		json_get_var target target
+		json_get_var subtarget subtarget
+		json_get_var mirror mirror
+		[ -z "$mirror" ] && mirror="$(get_mirror)"
+		mirror="${mirror%/}"
+		base_url="$mirror/releases/$version/targets/$target/$subtarget/kmods/"
+		html=$(fetch_url "$base_url" 20)
+		if [ -z "$html" ]; then
+			json_init
+			json_add_boolean "success" 0
+			json_add_string "error" "Failed to fetch $base_url"
+			json_add_string "base_url" "$base_url"
+			json_dump
+		else
+			echo "$html" | awk -v base="$base_url" '
+			BEGIN { print "{\"success\":true,\"base_url\":\"" base "\",\"dirs\":["; first=1 }
+			{
+				while (match($0, /href="[^"]*\/"/)) {
+					link = substr($0, RSTART+6, RLENGTH-7)
+					$0 = substr($0, RSTART+RLENGTH)
+					if (link ~ /^[0-9]+\.[0-9]+\.[0-9]+-/) {
+						gsub(/\/$/, "", link)
+						if (!first) printf ","
+						printf "{\"name\":\"%s\",\"url\":\"%s%s/\"}", link, base, link
+						first=0
+					}
+				}
+			}
+			END { print "]}" }'
+		fi
+		;;
+	search_kmods)
+		local base_url keyword packages_url content
+		json_get_var base_url base_url
+		json_get_var keyword keyword
+		base_url="${base_url%/}/"
+		content=$(fetch_url "${base_url}Packages" 30)
+		if [ -z "$content" ]; then
+			content=$(fetch_url "${base_url}Packages.gz" 30 | gunzip 2>/dev/null)
+		fi
+		if [ -z "$content" ]; then
+			json_init
+			json_add_boolean "success" 0
+			json_add_string "error" "Failed to fetch Packages index"
+			json_dump
+		else
+			echo "$content" | awk -v kw="$keyword" '
+			BEGIN { RS=""; FS="\n"; print "{\"success\":true,\"packages\":["; first=1; count=0 }
+			{
+				pkg=""; ver=""; desc=""; size=""; fname=""; deps=""
+				for (i=1; i<=NF; i++) {
+					line=$i
+					if (line ~ /^Package: /) pkg=substr(line,10)
+					else if (line ~ /^Version: /) ver=substr(line,10)
+					else if (line ~ /^Description: /) desc=substr(line,14)
+					else if (line ~ /^Size: /) size=substr(line,7)
+					else if (line ~ /^Filename: /) fname=substr(line,11)
+					else if (line ~ /^Depends: /) deps=substr(line,10)
+				}
+				if (pkg == "") next
+				if (kw != "" && tolower(pkg) !~ tolower(kw) && tolower(desc) !~ tolower(kw)) next
+				gsub(/\\/, "\\\\", desc); gsub(/"/, "\\\"", desc)
+				gsub(/\\/, "\\\\", deps); gsub(/"/, "\\\"", deps)
+				gsub(/\\/, "\\\\", fname); gsub(/"/, "\\\"", fname)
+				if (!first) printf ","
+				printf "{\"name\":\"%s\",\"version\":\"%s\",\"description\":\"%s\",\"size\":\"%s\",\"filename\":\"%s\",\"depends\":\"%s\"}", pkg, ver, desc, size, fname, deps
+				first=0; count++
+				if (count >= 200) exit
+			}
+			END { print "]}" }'
+		fi
+		;;
+	get_installed_kmods)
+		local pmgr
+		pmgr=$(get_pkg_manager)
+		if [ "$pmgr" = "opkg" ]; then
+			opkg list-installed 2>/dev/null | awk '
+				BEGIN { printf "{\"success\":true,\"manager\":\"opkg\",\"packages\":["; first=1 }
+				/^kmod-/ {
+					name=$1; ver=""
+					if (match($0, / - /)) ver=substr($0, RSTART+3)
+					if (!first) printf ","
+					printf "{\"name\":\"%s\",\"version\":\"%s\"}", name, ver
+					first=0
+				}
+				END { print "]}" }'
+		elif [ "$pmgr" = "apk" ]; then
+			apk info 2>/dev/null | awk '
+				BEGIN { printf "{\"success\":true,\"manager\":\"apk\",\"packages\":["; first=1 }
+				/^kmod-/ {
+					if (!first) printf ","
+					printf "{\"name\":\"%s\",\"version\":\"\"}", $1
+					first=0
+				}
+				END { print "]}" }'
+		else
+			json_init
+			json_add_boolean "success" 0
+			json_add_string "error" "No supported package manager"
+			json_dump
+		fi
+		;;
+	install_kmod)
+		local package url force pmgr out rc
+		json_get_var package package
+		json_get_var url url
+		json_get_var force force
+		pmgr=$(get_pkg_manager)
+		local target="${url:-$package}"
+		if [ "$pmgr" = "opkg" ]; then
+			if [ "$force" = "1" ] || [ "$force" = "true" ]; then
+				out=$(opkg install --nodeps "$target" 2>&1); rc=$?
+			else
+				out=$(opkg install "$target" 2>&1); rc=$?
+			fi
+		elif [ "$pmgr" = "apk" ]; then
+			if [ "$force" = "1" ] || [ "$force" = "true" ]; then
+				out=$(apk add --force-depends "$target" 2>&1); rc=$?
+				if [ $rc -ne 0 ]; then
+					out=$(apk add --force-non-repository "$target" 2>&1); rc=$?
+				fi
+			else
+				out=$(apk add "$target" 2>&1); rc=$?
+			fi
+		else
+			out="No supported package manager"; rc=1
+		fi
+		json_init
+		if [ $rc -eq 0 ]; then
+			json_add_boolean "success" 1
+		else
+			json_add_boolean "success" 0
+		fi
+		json_add_int "code" "$rc"
+		json_add_string "output" "$out"
+		json_dump
+		;;
+	remove_kmod)
+		local package pmgr out rc
+		json_get_var package package
+		pmgr=$(get_pkg_manager)
+		if [ "$pmgr" = "opkg" ]; then
+			out=$(opkg remove "$package" 2>&1); rc=$?
+		elif [ "$pmgr" = "apk" ]; then
+			out=$(apk del "$package" 2>&1); rc=$?
+		else
+			out="No supported package manager"; rc=1
+		fi
+		json_init
+		if [ $rc -eq 0 ]; then json_add_boolean "success" 1; else json_add_boolean "success" 0; fi
+		json_add_int "code" "$rc"
+		json_add_string "output" "$out"
+		json_dump
+		;;
+	list_loaded_modules)
+		lsmod 2>/dev/null | awk 'NR>1 {
+			if (!first) printf ","
+			printf "{\"name\":\"%s\",\"size\":%s,\"used\":%s}", $1, $2, $3
+			first=0
+		}' | awk 'BEGIN{print "{\"success\":true,\"modules\":["} {print} END{print "]}"}'
+		;;
+	get_dmesg)
+		local lines
+		json_get_var lines lines
+		lines="${lines:-200}"
+		local out
+		out=$(dmesg 2>/dev/null | tail -n "$lines")
+		json_init
+		json_add_boolean "success" 1
+		json_add_string "log" "$out"
+		json_dump
+		;;
+	get_modinfo)
+		local module out
+		json_get_var module module
+		if [ -z "$module" ]; then
+			json_init
+			json_add_boolean "success" 0
+			json_add_string "error" "No module specified"
+			json_dump
+		else
+			out=$(modinfo "$module" 2>&1)
+			json_init
+			if [ -n "$out" ]; then
+				json_add_boolean "success" 1
+				json_add_string "info" "$out"
+			else
+				json_add_boolean "success" 0
+				json_add_string "error" "Module not found or no info"
+			fi
+			json_dump
+		fi
+		;;
+	*)
+		json_init
+		json_add_boolean "success" 0
+		json_add_string "error" "Unknown method: $2"
+		json_dump
+		;;
+	esac
+	;;
+*)
+	echo '{"error":"Invalid request. Use list or call."}'
+	exit 1
+	;;
+esac
+
+exit 0

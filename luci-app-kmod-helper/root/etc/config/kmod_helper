@@ -1,0 +1,4 @@
+config main 'main'
+	option mirror 'https://mirrors.pku.edu.cn/immortalwrt/'
+	option custom_mirror ''
+	option use_custom '0'

@@ -1,0 +1,290 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: luci-app-kmod-helper 1.0.0\n"
+"PO-Revision-Date: 2026-09-04\n"
+"Last-Translator: zhtut\n"
+"Language-Team: Chinese (Simplified)\n"
+"Language: zh_Hans\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+msgid "Kernel Module Helper"
+msgstr "内核模块助手"
+
+msgid "Mirror Settings"
+msgstr "镜像源设置"
+
+msgid "Install Kmods"
+msgstr "安装内核模块"
+
+msgid "Installed Kmods"
+msgstr "已安装内核模块"
+
+msgid "Kernel Tools"
+msgstr "内核工具"
+
+msgid "Device & Kernel Information"
+msgstr "设备与内核信息"
+
+msgid "Device Model"
+msgstr "设备型号"
+
+msgid "Firmware Version"
+msgstr "固件版本"
+
+msgid "Target"
+msgstr "目标平台 (Target)"
+
+msgid "Subtarget"
+msgstr "子平台 (Subtarget)"
+
+msgid "Architecture"
+msgstr "架构"
+
+msgid "Kernel Version"
+msgstr "内核版本"
+
+msgid "Kernel Vermagic"
+msgstr "内核版本魔术 (Vermagic)"
+
+msgid "Package Manager"
+msgstr "包管理器"
+
+msgid "Current Mirror"
+msgstr "当前镜像源"
+
+msgid "Snapshot firmware detected: multiple kernel builds may exist on the mirror. The best-matching kernel directory will be selected automatically on the Install page."
+msgstr "检测到 Snapshot 固件：镜像站可能存在多个内核构建目录，安装页会自动选择最匹配的内核目录。"
+
+msgid "Release firmware detected: the mirror usually provides a single kernel directory matching your kernel vermagic."
+msgstr "检测到 Release 固件：镜像站通常提供与你内核 vermagic 匹配的单一内核目录。"
+
+msgid "Go to Install Kmods"
+msgstr "前往安装内核模块"
+
+msgid "Failed to load device info: %s"
+msgstr "加载设备信息失败：%s"
+
+msgid "Select a preset mirror or enter a custom one. The mirror is used to locate and download kmod kernel module packages. Saved settings take effect immediately (no reboot needed)."
+msgstr "选择预设镜像源或输入自定义镜像源。镜像源用于定位和下载 kmod 内核模块包。保存后立即生效，无需重启或刷新。"
+
+msgid "Preset Mirror"
+msgstr "预设镜像源"
+
+msgid "Custom Mirror"
+msgstr "自定义镜像源"
+
+msgid "Please enter a mirror URL."
+msgstr "请输入镜像源地址。"
+
+msgid "Saving"
+msgstr "正在保存"
+
+msgid "Saving mirror settings..."
+msgstr "正在保存镜像源设置…"
+
+msgid "Mirror saved and applied immediately: %s"
+msgstr "镜像源已保存并立即生效：%s"
+
+msgid "Failed to save mirror."
+msgstr "保存镜像源失败。"
+
+msgid "Error: %s"
+msgstr "错误：%s"
+
+msgid "Save & Apply"
+msgstr "保存并应用"
+
+msgid "Test Connectivity"
+msgstr "测试连通性"
+
+msgid "Testing..."
+msgstr "测试中…"
+
+msgid "Mirror is reachable"
+msgstr "镜像源可访问"
+
+msgid "Mirror is unreachable"
+msgstr "镜像源无法访问"
+
+msgid "Test failed"
+msgstr "测试失败"
+
+msgid "Install Kernel Modules"
+msgstr "安装内核模块"
+
+msgid "Kernel Package Source"
+msgstr "内核包来源"
+
+msgid "Kernel Directory"
+msgstr "内核目录"
+
+msgid "Match Status"
+msgstr "匹配状态"
+
+msgid "Base URL"
+msgstr "基础地址"
+
+msgid "Exact kernel vermagic match found."
+msgstr "已找到与内核 vermagic 完全匹配的目录。"
+
+msgid "No exact vermagic match. Using the newest directory matching your kernel version (%s)."
+msgstr "未找到完全匹配的 vermagic，已选用与你内核版本（%s）匹配的最新目录。"
+
+msgid "No directory matches your kernel version. Using the newest available directory; installation may still fail."
+msgstr "没有目录匹配你的内核版本，已选用最新可用目录，安装仍可能失败。"
+
+msgid "Manually selected kernel directory."
+msgstr "已手动选择内核目录。"
+
+msgid "Could not list kernel directories: "
+msgstr "无法列出内核目录："
+
+msgid "No kernel directories found on the mirror for this device/version."
+msgstr "镜像站上未找到适用于此设备/版本的内核目录。"
+
+msgid "Failed to list kernel directories"
+msgstr "列出内核目录失败"
+
+msgid "Search & Install"
+msgstr "搜索与安装"
+
+msgid "Keyword"
+msgstr "关键字"
+
+msgid "Search"
+msgstr "搜索"
+
+msgid "Force Install"
+msgstr "强制安装"
+
+msgid "Ignore dependencies (opkg --nodeps / apk --force-depends). Required when kernel vermagic does not match."
+msgstr "忽略依赖（opkg --nodeps / apk --force-depends）。当内核 vermagic 不匹配时必须勾选。"
+
+msgid "Enter a keyword (e.g. kmod-wireguard) and click Search. Leave empty to list all available kmod packages (first 200)."
+msgstr "输入关键字（如 kmod-wireguard）后点击搜索。留空则列出全部可用 kmod 包（前 200 个）。"
+
+msgid "Searching"
+msgstr "正在搜索"
+
+msgid "Fetching package index from mirror..."
+msgstr "正在从镜像源获取软件包索引…"
+
+msgid "No matching kmod packages found."
+msgstr "未找到匹配的 kmod 软件包。"
+
+msgid "Search failed."
+msgstr "搜索失败。"
+
+msgid "Search error: %s"
+msgstr "搜索出错：%s"
+
+msgid "Package"
+msgstr "软件包"
+
+msgid "Version"
+msgstr "版本"
+
+msgid "Description"
+msgstr "描述"
+
+msgid "Size (bytes)"
+msgstr "大小（字节）"
+
+msgid "Action"
+msgstr "操作"
+
+msgid "Install"
+msgstr "安装"
+
+msgid "Installing..."
+msgstr "安装中…"
+
+msgid "Installed"
+msgstr "已安装"
+
+msgid "Installed %s successfully."
+msgstr "成功安装 %s。"
+
+msgid "Install failed: "
+msgstr "安装失败："
+
+msgid "Install error: %s"
+msgstr "安装出错：%s"
+
+msgid "No kernel directory selected."
+msgstr "未选择内核目录。"
+
+msgid "Unknown error"
+msgstr "未知错误"
+
+msgid "Installed Kernel Modules"
+msgstr "已安装的内核模块"
+
+msgid "All installed kernel module packages (kmod-*). Package manager: %s"
+msgstr "所有已安装的内核模块包（kmod-*）。包管理器：%s"
+
+msgid "Warning: removing kernel modules may cause network/driver failure. Proceed with caution."
+msgstr "警告：卸载内核模块可能导致网络/驱动失效，请谨慎操作。"
+
+msgid "No kmod packages installed (or package manager not supported)."
+msgstr "未安装任何 kmod 软件包（或不支持的包管理器）。"
+
+msgid "unknown"
+msgstr "未知"
+
+msgid "Remove"
+msgstr "卸载"
+
+msgid "Removing..."
+msgstr "卸载中…"
+
+msgid "Really remove %s? Removing kernel modules may break functionality."
+msgstr "确定卸载 %s 吗？卸载内核模块可能导致功能异常。"
+
+msgid "Removed %s."
+msgstr "已卸载 %s。"
+
+msgid "Remove failed: "
+msgstr "卸载失败："
+
+msgid "Loaded Kernel Modules (lsmod)"
+msgstr "已加载的内核模块 (lsmod)"
+
+msgid "Module"
+msgstr "模块"
+
+msgid "Size"
+msgstr "大小"
+
+msgid "Used by"
+msgstr "被使用"
+
+msgid "No loaded modules or lsmod unavailable."
+msgstr "没有已加载的模块，或 lsmod 不可用。"
+
+msgid "Module Information (modinfo)"
+msgstr "模块信息 (modinfo)"
+
+msgid "Module Name"
+msgstr "模块名"
+
+msgid "Query"
+msgstr "查询"
+
+msgid "Loading..."
+msgstr "加载中…"
+
+msgid "No info"
+msgstr "无信息"
+
+msgid "Kernel Log (dmesg)"
+msgstr "内核日志 (dmesg)"
+
+msgid "No kernel log."
+msgstr "无内核日志。"
+
+msgid "Refresh"
+msgstr "刷新"

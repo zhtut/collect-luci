@@ -1,0 +1,4 @@
+#!/bin/sh
+# reload rpcd so the new luci.kmod-helper ubus object is registered
+/etc/init.d/rpcd reload >/dev/null 2>&1 || /etc/init.d/rpcd restart >/dev/null 2>&1
+exit 0

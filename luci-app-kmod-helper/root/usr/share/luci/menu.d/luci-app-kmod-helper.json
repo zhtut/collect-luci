@@ -1,0 +1,57 @@
+{
+	"admin/system/kmod-helper": {
+		"title": "Kernel Module Helper",
+		"order": 60,
+		"action": {
+			"type": "view",
+			"path": "kmod-helper/overview"
+		},
+		"depends": {
+			"acl": [ "luci-app-kmod-helper" ]
+		}
+	},
+	"admin/system/kmod-helper/mirror": {
+		"title": "Mirror Settings",
+		"order": 10,
+		"action": {
+			"type": "view",
+			"path": "kmod-helper/mirror"
+		},
+		"depends": {
+			"acl": [ "luci-app-kmod-helper" ]
+		}
+	},
+	"admin/system/kmod-helper/install": {
+		"title": "Install Kmods",
+		"order": 20,
+		"action": {
+			"type": "view",
+			"path": "kmod-helper/install"
+		},
+		"depends": {
+			"acl": [ "luci-app-kmod-helper" ]
+		}
+	},
+	"admin/system/kmod-helper/installed": {
+		"title": "Installed Kmods",
+		"order": 30,
+		"action": {
+			"type": "view",
+			"path": "kmod-helper/installed"
+		},
+		"depends": {
+			"acl": [ "luci-app-kmod-helper" ]
+		}
+	},
+	"admin/system/kmod-helper/tools": {
+		"title": "Kernel Tools",
+		"order": 40,
+		"action": {
+			"type": "view",
+			"path": "kmod-helper/tools"
+		},
+		"depends": {
+			"acl": [ "luci-app-kmod-helper" ]
+		}
+	}
+}

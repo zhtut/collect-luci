@@ -1,0 +1,28 @@
+{
+	"luci-app-kmod-helper": {
+		"description": "Grant access to kmod helper procedures",
+		"read": {
+			"ubus": {
+				"luci.kmod-helper": [
+					"get_device_info", "get_config", "list_kernel_dirs",
+					"search_kmods", "get_installed_kmods", "list_loaded_modules",
+					"get_dmesg", "get_modinfo", "test_mirror"
+				],
+				"system": [ "board", "info" ]
+			},
+			"uci": [ "kmod_helper" ],
+			"file": {
+				"/etc/openwrt_release": [ "read" ],
+				"/etc/board.json": [ "read" ]
+			}
+		},
+		"write": {
+			"ubus": {
+				"luci.kmod-helper": [
+					"set_mirror", "install_kmod", "remove_kmod"
+				]
+			},
+			"uci": [ "kmod_helper" ]
+		}
+	}
+}
