@@ -4,3 +4,5 @@ Build/
 dist/
 .idea/
 __pycache__
+.repo_cache/
+temp-clone/
