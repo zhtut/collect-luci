@@ -19,6 +19,7 @@
 | 安装内核模块 | 自动匹配内核目录（精确 vermagic → 同版本最新 → 兜底最新），搜索 kmod，一键强制安装 |
 | 已安装内核模块 | 列出所有 `kmod-*` 包，可卸载（带警告） |
 | 内核工具 | lsmod 已加载模块、modinfo 查询、dmesg 内核日志 |
+| 运行日志 | 前端会话日志 + 设备端日志（`/tmp/kmod-helper.log`），可一键下载用于排障 |
 
 ## 内核目录匹配逻辑
 
@@ -47,12 +48,15 @@
 ```
 luci-app-kmod-helper/
 ├── Makefile
-├── htdocs/luci-static/resources/view/kmod-helper/
-│   ├── overview.js     # 概览
-│   ├── mirror.js       # 镜像源设置
-│   ├── install.js      # 搜索与安装（核心）
-│   ├── installed.js    # 已安装列表
-│   └── tools.js        # 内核工具
+├── htdocs/luci-static/resources/
+│   ├── kmod_helper_log.js                     # 前端会话日志模块
+│   └── view/kmod-helper/
+│       ├── overview.js     # 概览
+│       ├── mirror.js       # 镜像源设置
+│       ├── install.js      # 搜索与安装（核心）
+│       ├── installed.js    # 已安装列表
+│       ├── tools.js        # 内核工具
+│       └── logs.js         # 运行日志
 ├── root/
 │   ├── etc/config/kmod_helper                 # UCI 配置
 │   ├── etc/uci-defaults/90-luci-app-kmod-helper
@@ -90,6 +94,26 @@ apk add --allow-untrusted luci-app-kmod-helper-1.0.0-r1.apk
 北大镜像站：`https://mirrors.pku.edu.cn/immortalwrt/`
 
 可在「镜像源设置」页切换为自定义镜像，保存后**立即生效**。
+
+## 排障与运行日志
+
+所有后端行为（每次 ubus 调用、参数、镜像站抓取的 URL/返回码/错误、opkg/apk 命令输出）
+都会记录到设备上的 `/tmp/kmod-helper.log`（超过 128KB 自动轮转）；前端的点击与 rpc
+调用记录在浏览器会话中。在 **运行日志** 页可查看两者并一键下载成 txt 文件，反馈问题
+时附上即可。
+
+也可以在设备上直接查看：
+
+```sh
+cat /tmp/kmod-helper.log
+```
+
+## 开发注意：换行符
+
+仓库通过 `.gitattributes` 强制所有文本文件使用 LF。`root/usr/libexec/rpcd/luci.kmod-helper`
+是 shell 脚本，一旦变成 CRLF，每条命令名都会带上 `\r`（如 `json_dump\r` → not found），
+导致所有 ubus 调用返回空对象（页面表现为设备信息全为 `-`、镜像源测试失败等）。
+切勿在 Windows 下用会写 CRLF 的工具保存该文件。
 
 ## License
 

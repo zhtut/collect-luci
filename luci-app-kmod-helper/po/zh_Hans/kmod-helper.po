@@ -288,3 +288,165 @@ msgstr "无内核日志。"
 
 msgid "Refresh"
 msgstr "刷新"
+
+msgid "Device Overview"
+msgstr "设备概览"
+
+msgid "Runtime Logs"
+msgstr "运行日志"
+
+msgid "view opened: device overview"
+msgstr "打开页面：设备概览"
+
+msgid "view opened: mirror settings"
+msgstr "打开页面：镜像源设置"
+
+msgid "view opened: install kmods"
+msgstr "打开页面：安装内核模块"
+
+msgid "view opened: installed kmods"
+msgstr "打开页面：已安装内核模块"
+
+msgid "view opened: kernel tools"
+msgstr "打开页面：内核工具"
+
+msgid "view opened: runtime logs"
+msgstr "打开页面：运行日志"
+
+msgid "click: Save & Apply (type=%s, url=%s)"
+msgstr "点击：保存并应用（类型=%s，地址=%s）"
+
+msgid "mirror saved: %s"
+msgstr "镜像源已保存：%s"
+
+msgid "mirror save failed: %s"
+msgstr "镜像源保存失败：%s"
+
+msgid "mirror save error: %s"
+msgstr "镜像源保存出错：%s"
+
+msgid "click: Test Connectivity (url=%s)"
+msgstr "点击：测试连通性（地址=%s）"
+
+msgid "kernel dirs loaded: %d dir(s), match=%s, selected=%s"
+msgstr "内核目录已加载：%d 个，匹配方式=%s，已选择=%s"
+
+msgid "click: retry loading kernel directories"
+msgstr "点击：重新加载内核目录"
+
+msgid "Retry"
+msgstr "重试"
+
+msgid "Reloading kernel directories..."
+msgstr "正在重新加载内核目录…"
+
+msgid "Reload failed: %s"
+msgstr "重新加载失败：%s"
+
+msgid "Kernel directories reloaded."
+msgstr "内核目录已重新加载。"
+
+msgid "kernel directory manually selected: %s"
+msgstr "已手动选择内核目录：%s"
+
+msgid "search blocked: no kernel directory selected, retrying dir load once"
+msgstr "搜索被阻止：未选择内核目录，自动重试加载一次"
+
+msgid "search blocked: no kernel directory available"
+msgstr "搜索被阻止：没有可用的内核目录"
+
+msgid "No kernel directory selected. Check the mirror settings or retry loading kernel directories."
+msgstr "未选择内核目录。请检查镜像源设置，或重试加载内核目录。"
+
+msgid "click: search keyword=\"%s\" base=%s"
+msgstr "点击：搜索 关键字=\"%s\" 目录=%s"
+
+msgid "search returned %d package(s)"
+msgstr "搜索返回 %d 个软件包"
+
+msgid "click: install %s (force=%s, url=%s)"
+msgstr "点击：安装 %s（强制=%s，地址=%s）"
+
+msgid "install ok: %s"
+msgstr "安装成功：%s"
+
+msgid "install failed: %s"
+msgstr "安装失败：%s"
+
+msgid "click: remove %s"
+msgstr "点击：卸载 %s"
+
+msgid "remove ok: %s"
+msgstr "卸载成功：%s"
+
+msgid "remove failed: %s"
+msgstr "卸载失败：%s"
+
+msgid "installed kmods listed: %d package(s), manager=%s"
+msgstr "已安装内核模块列表：%d 个包，包管理器=%s"
+
+msgid "lsmod: %d module(s), dmesg: %d byte(s)"
+msgstr "lsmod：%d 个模块；dmesg：%d 字节"
+
+msgid "click: modinfo %s"
+msgstr "点击：查询 modinfo %s"
+
+msgid "click: refresh dmesg"
+msgstr "点击：刷新 dmesg"
+
+msgid "No frontend log entries yet."
+msgstr "暂无前端日志记录。"
+
+msgid "Time"
+msgstr "时间"
+
+msgid "Level"
+msgstr "级别"
+
+msgid "Category"
+msgstr "类别"
+
+msgid "Message"
+msgstr "内容"
+
+msgid "click: refresh runtime logs"
+msgstr "点击：刷新运行日志"
+
+msgid "click: download log"
+msgstr "点击：下载日志"
+
+msgid "click: clear backend log"
+msgstr "点击：清空后端日志"
+
+msgid "Backend log cleared."
+msgstr "后端日志已清空。"
+
+msgid "Failed to clear backend log: %s"
+msgstr "清空后端日志失败：%s"
+
+msgid "auto refresh enabled (5s)"
+msgstr "已开启自动刷新（5 秒）"
+
+msgid "auto refresh disabled"
+msgstr "已关闭自动刷新"
+
+msgid "Frontend session log (since page load) and backend log from %s. Download everything and share it when reporting a problem."
+msgstr "前端会话日志（自页面加载起）与设备端日志（%s）。反馈问题时可下载全部内容一并提供。"
+
+msgid "Download Log"
+msgstr "下载日志"
+
+msgid "Clear Backend Log"
+msgstr "清空后端日志"
+
+msgid "Auto refresh (5s)"
+msgstr "自动刷新（5 秒）"
+
+msgid "Frontend Session Log"
+msgstr "前端会话日志"
+
+msgid "Backend Log (device)"
+msgstr "后端日志（设备端）"
+
+msgid "No backend log yet."
+msgstr "暂无后端日志。"

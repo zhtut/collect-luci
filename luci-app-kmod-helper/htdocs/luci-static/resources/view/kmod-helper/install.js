@@ -2,6 +2,7 @@
 'require view';
 'require rpc';
 'require ui';
+'require kmod_helper_log';
 
 var callGetDeviceInfo = rpc.declare({
 	object: 'luci.kmod-helper',
@@ -53,27 +54,37 @@ return view.extend({
 		self.matchType = 'none';
 		self.installedSet = {};
 		self.searchResults = [];
-		return callGetDeviceInfo().then(function(info) {
-			self.deviceInfo = info || {};
-			return Promise.all([
-				callListKernelDirs(
-					self.deviceInfo.release,
-					self.deviceInfo.target,
-					self.deviceInfo.subtarget,
-					self.deviceInfo.mirror
-				).catch(function() { return { success: false, dirs: [] }; }),
-				callGetInstalled().catch(function() { return { packages: [] }; })
-			]);
-		}).then(function(results) {
-			var dirsRes = results[0] || {};
-			var instRes = results[1] || {};
-			self.kernelDirs = dirsRes.dirs || [];
-			self.kernelDirsBaseUrl = dirsRes.base_url || '';
-			self.kernelDirsError = dirsRes.success ? null : (dirsRes.error || _('Failed to list kernel directories'));
+		kmod_helper_log.ui('info', _('view opened: install kmods'));
+		return self.reloadDeviceAndDirs().then(function() {
+			return kmod_helper_log.rpc('get_installed_kmods', callGetInstalled, []).catch(function() { return { packages: [] }; });
+		}).then(function(instRes) {
+			instRes = instRes || {};
 			(instRes.packages || []).forEach(function(p) {
 				self.installedSet[p.name] = true;
 			});
+			return null;
+		});
+	},
+
+	/* Fetch device info + kernel directories; updates selector state. */
+	reloadDeviceAndDirs: function() {
+		var self = this;
+		return kmod_helper_log.rpc('get_device_info', callGetDeviceInfo, []).then(function(info) {
+			self.deviceInfo = info || {};
+			return kmod_helper_log.rpc('list_kernel_dirs', callListKernelDirs, [
+				self.deviceInfo.release,
+				self.deviceInfo.target,
+				self.deviceInfo.subtarget,
+				self.deviceInfo.mirror
+			]).catch(function() { return { success: false, dirs: [] }; });
+		}).then(function(dirsRes) {
+			dirsRes = dirsRes || {};
+			self.kernelDirs = dirsRes.dirs || [];
+			self.kernelDirsBaseUrl = dirsRes.base_url || '';
+			self.kernelDirsError = dirsRes.success ? null : (dirsRes.error || _('Failed to list kernel directories'));
 			self.autoSelectKernelDir();
+			kmod_helper_log.ui('info', _('kernel dirs loaded: %d dir(s), match=%s, selected=%s')
+				.format(self.kernelDirs.length, self.matchType, self.selectedDirUrl || '-'));
 			return null;
 		});
 	},
@@ -85,7 +96,6 @@ return view.extend({
 	},
 
 	autoSelectKernelDir: function() {
-		var self = this;
 		var vm = (this.deviceInfo && this.deviceInfo.vermagic) || '';
 		var major = this.kernelMajor();
 		var dirs = this.kernelDirs || [];
@@ -114,9 +124,33 @@ return view.extend({
 		this.matchType = 'fallback';
 	},
 
+	refreshSelector: function() {
+		var box = document.getElementById('kernel-dir-box');
+		if (!box) return;
+		while (box.firstChild) box.removeChild(box.firstChild);
+		box.appendChild(this.renderKernelDirSelector());
+	},
+
+	retryLoadDirs: function() {
+		var self = this;
+		kmod_helper_log.ui('info', _('click: retry loading kernel directories'));
+		ui.showModal(_('Retry'), [E('p', { 'class': 'spinning' }, _('Reloading kernel directories...'))]);
+		return this.reloadDeviceAndDirs().then(function() {
+			ui.hideModal();
+			self.refreshSelector();
+			if (self.kernelDirsError) {
+				ui.addNotification(null, E('p', _('Reload failed: %s').format(self.kernelDirsError)), 'error');
+			} else {
+				ui.addNotification(null, E('p', _('Kernel directories reloaded.')), 'info');
+			}
+		}).catch(function(e) {
+			ui.hideModal();
+			ui.addNotification(null, E('p', _('Reload failed: %s').format(e.message || e)), 'error');
+		});
+	},
+
 	renderKernelDirSelector: function() {
 		var self = this;
-		var info = this.deviceInfo || {};
 
 		if (this.kernelDirsError) {
 			return E('div', { 'class': 'cbi-section' }, [
@@ -124,14 +158,26 @@ return view.extend({
 					E('strong', {}, _('Could not list kernel directories: ')),
 					this.kernelDirsError,
 					E('br'),
-					E('small', {}, this.kernelDirsBaseUrl || '')
+					E('small', {}, this.kernelDirsBaseUrl || ''),
+					E('br'),
+					E('button', {
+						'class': 'btn cbi-button',
+						'click': function() { self.retryLoadDirs(); }
+					}, _('Retry'))
 				])
 			]);
 		}
 
 		if (!this.kernelDirs.length) {
 			return E('div', { 'class': 'cbi-section' }, [
-				E('div', { 'class': 'alert-message warning' }, _('No kernel directories found on the mirror for this device/version.'))
+				E('div', { 'class': 'alert-message warning' }, [
+					_('No kernel directories found on the mirror for this device/version.'),
+					E('br'),
+					E('button', {
+						'class': 'btn cbi-button',
+						'click': function() { self.retryLoadDirs(); }
+					}, _('Retry'))
+				])
 			]);
 		}
 
@@ -146,6 +192,7 @@ return view.extend({
 			self.selectedDirUrl = ev.target.value;
 			self.matchType = 'manual';
 			self.searchResults = [];
+			kmod_helper_log.ui('info', _('kernel directory manually selected: %s').format(self.selectedDirUrl));
 			self.refreshResults();
 		});
 
@@ -174,17 +221,27 @@ return view.extend({
 		]);
 	},
 
-	doSearch: function(keyword) {
+	doSearch: function(keyword, isRetry) {
 		var self = this;
 		if (!this.selectedDirUrl) {
-			ui.addNotification(null, E('p', _('No kernel directory selected.')), 'error');
+			if (!isRetry) {
+				kmod_helper_log.ui('warn', _('search blocked: no kernel directory selected, retrying dir load once'));
+				this.retryLoadDirs().then(function() {
+					self.doSearch(keyword, true);
+				});
+				return;
+			}
+			kmod_helper_log.ui('error', _('search blocked: no kernel directory available'));
+			ui.addNotification(null, E('p', _('No kernel directory selected. Check the mirror settings or retry loading kernel directories.')), 'error');
 			return;
 		}
+		kmod_helper_log.ui('info', _('click: search keyword="%s" base=%s').format(keyword || '', this.selectedDirUrl));
 		ui.showModal(_('Searching'), [E('p', { 'class': 'spinning' }, _('Fetching package index from mirror...'))]);
-		callSearchKmods(this.selectedDirUrl, keyword || '').then(function(res) {
+		kmod_helper_log.rpc('search_kmods', callSearchKmods, [this.selectedDirUrl, keyword || '']).then(function(res) {
 			ui.hideModal();
 			if (res && res.success) {
 				self.searchResults = res.packages || [];
+				kmod_helper_log.ui('info', _('search returned %d package(s)').format(self.searchResults.length));
 				if (!self.searchResults.length) {
 					ui.addNotification(null, E('p', _('No matching kmod packages found.')), 'info');
 				}
@@ -203,20 +260,23 @@ return view.extend({
 		var force = document.getElementById('force-nodeps');
 		var useForce = force ? (force.checked ? '1' : '0') : '1';
 		var url = (this.selectedDirUrl || '') + (pkg.filename || ('' + pkg.name + '_' + pkg.version + '.ipk'));
+		kmod_helper_log.ui('info', _('click: install %s (force=%s, url=%s)').format(pkg.name, useForce, url));
 		btn.disabled = true;
 		btn.textContent = _('Installing...');
 		btn.classList.add('spinning');
-		callInstallKmod(pkg.name, url, useForce).then(function(res) {
+		kmod_helper_log.rpc('install_kmod', callInstallKmod, [pkg.name, url, useForce]).then(function(res) {
 			btn.classList.remove('spinning');
 			if (res && res.success) {
 				self.installedSet[pkg.name] = true;
 				btn.textContent = _('Installed');
 				btn.disabled = true;
 				btn.classList.add('cbi-button-disabled');
+				kmod_helper_log.ui('info', _('install ok: %s').format(pkg.name));
 				ui.addNotification(null, E('p', _('Installed %s successfully.').format(pkg.name)), 'info');
 			} else {
 				btn.disabled = false;
 				btn.textContent = _('Install');
+				kmod_helper_log.ui('error', _('install failed: %s').format(pkg.name));
 				ui.addNotification(null, E('p', [
 					E('strong', {}, _('Install failed: ')),
 					E('pre', { 'style': 'white-space:pre-wrap;max-height:12em;overflow:auto' }, (res && res.output) || _('Unknown error'))
@@ -287,7 +347,7 @@ return view.extend({
 
 		return E('div', {}, [
 			E('h2', {}, _('Install Kernel Modules')),
-			this.renderKernelDirSelector(),
+			E('div', { 'id': 'kernel-dir-box' }, [ this.renderKernelDirSelector() ]),
 			E('div', { 'class': 'cbi-section' }, [
 				E('h3', {}, _('Search & Install')),
 				E('div', { 'class': 'cbi-value' }, [

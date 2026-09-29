@@ -6,7 +6,7 @@
 				"luci.kmod-helper": [
 					"get_device_info", "get_config", "list_kernel_dirs",
 					"search_kmods", "get_installed_kmods", "list_loaded_modules",
-					"get_dmesg", "get_modinfo", "test_mirror"
+					"get_dmesg", "get_modinfo", "test_mirror", "get_log"
 				],
 				"system": [ "board", "info" ]
 			},
@@ -19,7 +19,7 @@
 		"write": {
 			"ubus": {
 				"luci.kmod-helper": [
-					"set_mirror", "install_kmod", "remove_kmod"
+					"set_mirror", "install_kmod", "remove_kmod", "clear_log"
 				]
 			},
 			"uci": [ "kmod_helper" ]

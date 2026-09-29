@@ -2,6 +2,7 @@
 'require view';
 'require rpc';
 'require ui';
+'require kmod_helper_log';
 
 var callGetDeviceInfo = rpc.declare({
 	object: 'luci.kmod-helper',
@@ -18,7 +19,8 @@ function infoRow(label, value) {
 
 return view.extend({
 	load: function() {
-		return callGetDeviceInfo().catch(function(e) {
+		kmod_helper_log.ui('info', _('view opened: device overview'));
+		return kmod_helper_log.rpc('get_device_info', callGetDeviceInfo, []).catch(function(e) {
 			ui.addNotification(null, E('p', _('Failed to load device info: %s').format(e.message || e)), 'error');
 			return {};
 		});

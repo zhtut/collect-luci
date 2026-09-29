@@ -1,0 +1,5 @@
+# Force LF line endings for every text file on checkout.
+# The rpcd backend (root/usr/libexec/rpcd/luci.kmod-helper) is a shell script:
+# with CRLF endings every command name gains a trailing \r (e.g. "json_dump\r")
+# and is reported as "not found", so all ubus calls reply with empty objects.
+* text=auto eol=lf

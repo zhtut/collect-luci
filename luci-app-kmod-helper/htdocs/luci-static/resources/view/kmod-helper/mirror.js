@@ -2,7 +2,7 @@
 'require view';
 'require rpc';
 'require ui';
-'require form';
+'require kmod_helper_log';
 
 var callGetConfig = rpc.declare({
 	object: 'luci.kmod-helper',
@@ -30,7 +30,8 @@ var PRESET_MIRRORS = [
 
 return view.extend({
 	load: function() {
-		return callGetConfig().catch(function() { return {}; });
+		kmod_helper_log.ui('info', _('view opened: mirror settings'));
+		return kmod_helper_log.rpc('get_config', callGetConfig, []).catch(function() { return {}; });
 	},
 
 	render: function(cfg) {
@@ -67,45 +68,55 @@ return view.extend({
 
 		var statusEl = E('span', { 'style': 'margin-left:1em' }, '');
 
-		var self = this;
-		function doSave() {
+		function currentUrl() {
 			var isCustom = radioCustom.checked;
 			var url = isCustom ? customInput.value.trim() : presetSel.value;
+			if (url && url.charAt(url.length - 1) !== '/') url += '/';
+			return url;
+		}
+
+		function doSave() {
+			var isCustom = radioCustom.checked;
+			var url = currentUrl();
+			kmod_helper_log.ui('info', _('click: Save & Apply (type=%s, url=%s)').format(isCustom ? 'custom' : 'preset', url));
 			if (!url) {
 				ui.addNotification(null, E('p', _('Please enter a mirror URL.')), 'error');
 				return;
 			}
-			if (url.charAt(url.length - 1) !== '/') url += '/';
 			ui.showModal(_('Saving'), [E('p', { 'class': 'spinning' }, _('Saving mirror settings...'))]);
-			callSetMirror(presetSel.value, customInput.value.trim(), isCustom ? '1' : '0').then(function(res) {
+			kmod_helper_log.rpc('set_mirror', callSetMirror, [presetSel.value, customInput.value.trim(), isCustom ? '1' : '0']).then(function(res) {
 				ui.hideModal();
 				if (res && res.success) {
+					kmod_helper_log.ui('info', _('mirror saved: %s').format(res.effective_mirror || url));
 					ui.addNotification(null, E('p', _('Mirror saved and applied immediately: %s').format(res.effective_mirror || url)), 'info');
 				} else {
-					ui.addNotification(null, E('p', _('Failed to save mirror.')), 'error');
+					kmod_helper_log.ui('error', _('mirror save failed: %s').format((res && res.error) || _('unknown')));
+					ui.addNotification(null, E('p', _('Failed to save mirror.') + ' ' + ((res && res.error) || '')), 'error');
 				}
 			}).catch(function(e) {
 				ui.hideModal();
+				kmod_helper_log.ui('error', _('mirror save error: %s').format(e.message || e));
 				ui.addNotification(null, E('p', _('Error: %s').format(e.message || e)), 'error');
 			});
 		}
 
 		function doTest() {
-			var isCustom = radioCustom.checked;
-			var url = isCustom ? customInput.value.trim() : presetSel.value;
+			var url = currentUrl();
+			kmod_helper_log.ui('info', _('click: Test Connectivity (url=%s)').format(url));
 			if (!url) return;
-			if (url.charAt(url.length - 1) !== '/') url += '/';
 			statusEl.textContent = _('Testing...');
-			callTestMirror(url).then(function(res) {
+			statusEl.style.color = '';
+			kmod_helper_log.rpc('test_mirror', callTestMirror, [url]).then(function(res) {
 				if (res && res.success) {
 					statusEl.textContent = '✓ ' + _('Mirror is reachable');
 					statusEl.style.color = 'green';
 				} else {
-					statusEl.textContent = '✗ ' + _('Mirror is unreachable');
+					statusEl.textContent = '✗ ' + _('Mirror is unreachable') +
+						((res && res.message) ? '（' + res.message + '）' : '');
 					statusEl.style.color = 'red';
 				}
-			}).catch(function() {
-				statusEl.textContent = '✗ ' + _('Test failed');
+			}).catch(function(e) {
+				statusEl.textContent = '✗ ' + _('Test failed') + '（' + (e.message || e) + '）';
 				statusEl.style.color = 'red';
 			});
 		}

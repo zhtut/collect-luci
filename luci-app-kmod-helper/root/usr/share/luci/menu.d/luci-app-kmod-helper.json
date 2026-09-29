@@ -3,6 +3,17 @@
 		"title": "Kernel Module Helper",
 		"order": 60,
 		"action": {
+			"type": "alias",
+			"path": "admin/system/kmod-helper/overview"
+		},
+		"depends": {
+			"acl": [ "luci-app-kmod-helper" ]
+		}
+	},
+	"admin/system/kmod-helper/overview": {
+		"title": "Device Overview",
+		"order": 5,
+		"action": {
 			"type": "view",
 			"path": "kmod-helper/overview"
 		},
@@ -49,6 +60,17 @@
 		"action": {
 			"type": "view",
 			"path": "kmod-helper/tools"
+		},
+		"depends": {
+			"acl": [ "luci-app-kmod-helper" ]
+		}
+	},
+	"admin/system/kmod-helper/logs": {
+		"title": "Runtime Logs",
+		"order": 50,
+		"action": {
+			"type": "view",
+			"path": "kmod-helper/logs"
 		},
 		"depends": {
 			"acl": [ "luci-app-kmod-helper" ]

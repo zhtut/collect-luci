@@ -2,6 +2,7 @@
 'require view';
 'require rpc';
 'require ui';
+'require kmod_helper_log';
 
 var callGetInstalled = rpc.declare({
 	object: 'luci.kmod-helper',
@@ -18,21 +19,25 @@ var callRemoveKmod = rpc.declare({
 
 return view.extend({
 	load: function() {
-		return callGetInstalled().catch(function() { return { packages: [] }; });
+		kmod_helper_log.ui('info', _('view opened: installed kmods'));
+		return kmod_helper_log.rpc('get_installed_kmods', callGetInstalled, []).catch(function() { return { packages: [] }; });
 	},
 
 	doRemove: function(name, btn) {
 		var self = this;
 		if (!confirm(_('Really remove %s? Removing kernel modules may break functionality.').format(name))) return;
+		kmod_helper_log.ui('info', _('click: remove %s').format(name));
 		btn.disabled = true;
 		btn.textContent = _('Removing...');
-		callRemoveKmod(name).then(function(res) {
+		kmod_helper_log.rpc('remove_kmod', callRemoveKmod, [name]).then(function(res) {
 			if (res && res.success) {
+				kmod_helper_log.ui('info', _('remove ok: %s').format(name));
 				ui.addNotification(null, E('p', _('Removed %s.').format(name)), 'info');
-				return callGetInstalled().then(function(r) { self.renderList(r); });
+				return kmod_helper_log.rpc('get_installed_kmods', callGetInstalled, []).then(function(r) { self.renderList(r); });
 			} else {
 				btn.disabled = false;
 				btn.textContent = _('Remove');
+				kmod_helper_log.ui('error', _('remove failed: %s').format(name));
 				ui.addNotification(null, E('p', [
 					E('strong', {}, _('Remove failed: ')),
 					E('pre', { 'style': 'white-space:pre-wrap' }, (res && res.output) || _('Unknown error'))
@@ -46,7 +51,6 @@ return view.extend({
 	},
 
 	renderList: function(res) {
-		var self = this;
 		var old = document.getElementById('installed-kmods');
 		if (!old) return;
 		while (old.firstChild) old.removeChild(old.firstChild);
@@ -79,11 +83,14 @@ return view.extend({
 	},
 
 	render: function(res) {
+		res = res || {};
+		kmod_helper_log.ui('info', _('installed kmods listed: %d package(s), manager=%s')
+			.format((res.packages || []).length, res.manager || '-'));
 		return E('div', {}, [
 			E('h2', {}, _('Installed Kernel Modules')),
 			E('div', { 'class': 'cbi-section' }, [
 				E('div', { 'class': 'cbi-section-descr' },
-					_('All installed kernel module packages (kmod-*). Package manager: %s').format((res && res.manager) || _('unknown')),
+					_('All installed kernel module packages (kmod-*). Package manager: %s').format(res.manager || _('unknown')),
 					E('br'),
 					E('strong', { 'style': 'color:#c00' }, _('Warning: removing kernel modules may cause network/driver failure. Proceed with caution.'))),
 				E('div', { 'id': 'installed-kmods' }, [ this.buildTable(res) ])
